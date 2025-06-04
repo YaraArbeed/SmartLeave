@@ -13,7 +13,7 @@ namespace SmartLeave.MVC.Controllers
             _logger = logger;
         }
 
-        public IActionResult Index() 
+        public IActionResult Index()
         {
             return View();
         }

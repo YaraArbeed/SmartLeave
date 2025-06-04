@@ -11,7 +11,7 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SmartLeave.Common", "SmartL
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SmartLeave.DAL", "SmartLeave.DAL\SmartLeave.DAL.csproj", "{A55389C5-12CB-4E2C-B7AA-2BD8F9AD3316}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SmartLeave.MVC", "SmartLeave.MVC\SmartLeave.MVC.csproj", "{6F992957-85CC-4FED-9AD3-97685A43C63B}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "EmailService", "EmailService\EmailService.csproj", "{4899B4EE-316A-4ACB-90BB-9674A1A39A11}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -35,10 +35,10 @@ Global
 		{A55389C5-12CB-4E2C-B7AA-2BD8F9AD3316}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{A55389C5-12CB-4E2C-B7AA-2BD8F9AD3316}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{A55389C5-12CB-4E2C-B7AA-2BD8F9AD3316}.Release|Any CPU.Build.0 = Release|Any CPU
-		{6F992957-85CC-4FED-9AD3-97685A43C63B}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{6F992957-85CC-4FED-9AD3-97685A43C63B}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{6F992957-85CC-4FED-9AD3-97685A43C63B}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{6F992957-85CC-4FED-9AD3-97685A43C63B}.Release|Any CPU.Build.0 = Release|Any CPU
+		{4899B4EE-316A-4ACB-90BB-9674A1A39A11}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{4899B4EE-316A-4ACB-90BB-9674A1A39A11}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{4899B4EE-316A-4ACB-90BB-9674A1A39A11}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{4899B4EE-316A-4ACB-90BB-9674A1A39A11}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
