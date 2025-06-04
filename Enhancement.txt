@@ -1,0 +1,2 @@
+Registration(Employee,Manager)
+Role as Enum , and accept role as Id not text 
