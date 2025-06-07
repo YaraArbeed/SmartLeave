@@ -16,6 +16,23 @@ namespace SmartLeave.API.DTOs
         [Compare("Password", ErrorMessage = "The password and confirmation password do not match.")]
         public string ConfirmPassword { get; set; }
 
+        public string Position { get; set; }
+
+        /// <summary>
+        /// FK to Offices table
+        /// </summary>
+        public int OfficeId { get; set; }
+
+        /// <summary>
+        /// FK to Countries table
+        /// </summary>
+        public int CountryId { get; set; }
+
+        /// <summary>
+        /// When they were hired
+        /// </summary>
+        public DateTime DateHired { get; set; }
+
         public string Role { get; set; }  // "Admin", "Manager", "Employee"
     }
 }

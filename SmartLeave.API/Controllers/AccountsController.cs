@@ -32,6 +32,10 @@ namespace SmartLeave.API.Controllers
         {
             if (userForRegistration is null)
                 return BadRequest();
+
+            if (userForRegistration.Role == "Admin")
+                return BadRequest("You are not allowed to register as an Admin.");
+
             // 1. Map the UserForRegistrationDto to the ApplicationUser entity
             var user = _mapper.Map<User>(userForRegistration); // Assuming ApplicationUser is your Identity user class
 
@@ -50,13 +54,17 @@ namespace SmartLeave.API.Controllers
 
             }
             user.EmailConfirmed = true;
+            user.CountryId = userForRegistration.CountryId;
+            user.OfficeId = userForRegistration.OfficeId;
+            user.Position= userForRegistration.Position;
+            user.DateHired=userForRegistration.DateHired;
             await _userManager.UpdateAsync(user);
-            // If user creation is successful, proceed with email confirmation
-
-         
             await _userManager.SetTwoFactorEnabledAsync(user, true);
+
             await _userManager.AddToRoleAsync(user, userForRegistration.Role);
             return StatusCode(201);
+          
+            
         }
 
         [HttpPost("authenticate")]
@@ -204,7 +212,7 @@ namespace SmartLeave.API.Controllers
             return Ok();
         }
 
-        [Authorize]
+        [Authorize(Roles = "Employee,Manager")]
         [HttpPost("complete-profile")]
         public async Task<IActionResult> CompleteProfile([FromBody] CompleteProfileDto dto)
         {
@@ -214,12 +222,9 @@ namespace SmartLeave.API.Controllers
 
 
             // Update values
-            user.OfficeId = dto.OfficeId;
-            user.CountryId = dto.CountryId;
+
             user.TeamId = dto.TeamId;
-            user.Position = dto.Position;
             user.ManagerId = dto.ManagerId;
-            user.DateHired = dto.DateHired;
 
             var result = await _userManager.UpdateAsync(user);
             if (!result.Succeeded)

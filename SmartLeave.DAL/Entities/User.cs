@@ -28,22 +28,22 @@ namespace SmartLeave.DAL.Entities
         /// <summary>
         /// e.g. "Software Engineer II" or "Sales Associate"
         /// </summary>
-        public string? Position { get; set; }
+        public string Position { get; set; }
 
         /// <summary>
         /// FK to Offices table
         /// </summary>
-        public int? OfficeId { get; set; }
+        public int OfficeId { get; set; }
 
         /// <summary>
         /// FK to Countries table
         /// </summary>
-        public int? CountryId { get; set; }
+        public int CountryId { get; set; }
 
         /// <summary>
         /// When they were hired
         /// </summary>
-        public DateTime? DateHired { get; set; }
+        public DateTime DateHired { get; set; }
 
         /// <summary>
         /// Soft-delete flag; defaults to true

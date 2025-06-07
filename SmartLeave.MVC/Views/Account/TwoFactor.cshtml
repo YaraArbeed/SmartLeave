@@ -1,0 +1,505 @@
+﻿@model TwoFactorViewModel
+@{
+    ViewData["Title"] = "Two-Factor Authentication";
+    Layout = "_Layout";
+}
+
+<style>
+    .two-factor-container {
+        min-height: 100vh;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 20px;
+    }
+
+    .two-factor-card {
+        background: rgba(255, 255, 255, 0.95);
+        backdrop-filter: blur(10px);
+        border-radius: 20px;
+        box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+        padding: 40px;
+        width: 100%;
+        max-width: 450px;
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        animation: fadeInUp 0.6s ease-out;
+    }
+
+    .two-factor-header {
+        text-align: center;
+        margin-bottom: 30px;
+    }
+
+    .two-factor-icon {
+        width: 80px;
+        height: 80px;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin: 0 auto 20px;
+        box-shadow: 0 10px 30px rgba(102, 126, 234, 0.3);
+        animation: pulse 2s infinite;
+    }
+
+    .email-notification {
+        background: rgba(102, 126, 234, 0.1);
+        border: 1px solid rgba(102, 126, 234, 0.2);
+        border-radius: 12px;
+        padding: 20px;
+        margin-bottom: 25px;
+        text-align: center;
+    }
+
+    .email-icon {
+        width: 50px;
+        height: 50px;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin: 0 auto 15px;
+        box-shadow: 0 5px 15px rgba(102, 126, 234, 0.3);
+    }
+
+    .verification-input {
+        height: 60px;
+        border: 2px solid #e1e5e9;
+        border-radius: 12px;
+        padding: 0 20px;
+        font-size: 24px;
+        font-weight: 600;
+        text-align: center;
+        letter-spacing: 8px;
+        transition: all 0.3s ease;
+        background: rgba(255, 255, 255, 0.9);
+        width: 100%;
+        margin-bottom: 20px;
+    }
+
+        .verification-input:focus {
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+            outline: none;
+            transform: translateY(-2px);
+        }
+
+        .verification-input::placeholder {
+            color: #cbd5e0;
+            font-weight: 400;
+            letter-spacing: 2px;
+        }
+
+    .btn-verify {
+        width: 100%;
+        height: 50px;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        border: none;
+        border-radius: 12px;
+        color: white;
+        font-size: 16px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        margin-bottom: 15px;
+        position: relative;
+        overflow: hidden;
+    }
+
+        .btn-verify::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+            transition: left 0.5s;
+        }
+
+        .btn-verify:hover::before {
+            left: 100%;
+        }
+
+        .btn-verify:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 30px rgba(102, 126, 234, 0.4);
+        }
+
+        .btn-verify:disabled {
+            opacity: 0.7;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+    .btn-back {
+        width: 100%;
+        height: 50px;
+        background: white;
+        border: 2px solid #e1e5e9;
+        border-radius: 12px;
+        color: #4a5568;
+        font-size: 16px;
+        font-weight: 500;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        margin-bottom: 20px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+        text-decoration: none;
+    }
+
+        .btn-back:hover {
+            border-color: #667eea;
+            color: #667eea;
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+            text-decoration: none;
+        }
+
+    .resend-link {
+        text-align: center;
+        margin-top: 20px;
+    }
+
+        .resend-link a {
+            color: #667eea;
+            text-decoration: none;
+            font-weight: 500;
+            transition: all 0.3s ease;
+            position: relative;
+        }
+
+            .resend-link a:hover {
+                color: #5a67d8;
+                text-decoration: underline;
+            }
+
+    .form-label {
+        font-weight: 600;
+        color: #2d3748;
+        margin-bottom: 8px;
+        display: block;
+        font-size: 14px;
+    }
+
+    .alert {
+        border-radius: 12px;
+        margin-bottom: 20px;
+        padding: 15px;
+        border: none;
+        display: flex;
+        align-items: center;
+        animation: slideInDown 0.3s ease-out;
+    }
+
+    .alert-danger {
+        background: rgba(245, 101, 101, 0.1);
+        color: #f56565;
+        border-left: 4px solid #f56565;
+    }
+
+    .countdown-timer {
+        background: rgba(237, 137, 54, 0.1);
+        border: 1px solid rgba(237, 137, 54, 0.2);
+        border-radius: 8px;
+        padding: 10px;
+        text-align: center;
+        margin-top: 15px;
+        font-size: 14px;
+        color: #ed8936;
+    }
+
+    .security-note {
+        background: rgba(66, 153, 225, 0.1);
+        border: 1px solid rgba(66, 153, 225, 0.2);
+        border-radius: 8px;
+        padding: 15px;
+        margin-top: 20px;
+        font-size: 13px;
+        color: #4299e1;
+        text-align: center;
+    }
+
+    @@keyframes fadeInUp {
+        from {
+            opacity: 0;
+            transform: translate3d(0, 30px, 0);
+        }
+
+        to {
+            opacity: 1;
+            transform: translate3d(0, 0, 0);
+        }
+    }
+
+    @@keyframes pulse {
+        0%, 100% {
+            transform: scale(1);
+        }
+
+        50% {
+            transform: scale(1.05);
+        }
+    }
+
+    @@keyframes slideInDown {
+        from {
+            opacity: 0;
+            transform: translate3d(0, -20px, 0);
+        }
+
+        to {
+            opacity: 1;
+            transform: translate3d(0, 0, 0);
+        }
+    }
+
+    @@keyframes shake {
+        0%, 100% {
+            transform: translateX(0);
+        }
+
+        10%, 30%, 50%, 70%, 90% {
+            transform: translateX(-5px);
+        }
+
+        20%, 40%, 60%, 80% {
+            transform: translateX(5px);
+        }
+    }
+
+    .shake {
+        animation: shake 0.5s ease-in-out;
+    }
+
+    /* Responsive Design */
+    @@media (max-width: 768px) {
+        .two-factor-card {
+            padding: 30px 20px;
+            margin: 10px;
+        }
+
+        .two-factor-icon {
+            width: 60px;
+            height: 60px;
+        }
+
+        .verification-input {
+            height: 55px;
+            font-size: 20px;
+            letter-spacing: 6px;
+        }
+    }
+
+    @@media (max-width: 480px) {
+        .two-factor-container {
+            padding: 10px;
+        }
+
+        .two-factor-card {
+            padding: 20px 15px;
+        }
+
+        .verification-input {
+            height: 50px;
+            font-size: 18px;
+            letter-spacing: 4px;
+        }
+
+        .btn-verify, .btn-back {
+            height: 45px;
+            font-size: 14px;
+        }
+    }
+</style>
+
+<div class="two-factor-container">
+    <div class="two-factor-card">
+        <div class="two-factor-header">
+            <div class="two-factor-icon">
+                <i class="fas fa-shield-alt text-white" style="font-size: 32px;"></i>
+            </div>
+            <h1 style="font-size: 28px; font-weight: 700; color: #2d3748; margin-bottom: 8px;">Verification Required</h1>
+            <p style="color: #718096; margin: 0;">Please enter the code sent to your email</p>
+        </div>
+
+        @if (ViewData["ErrorMessage"] != null)
+        {
+            <div class="alert alert-danger">
+                <i class="fas fa-exclamation-triangle me-2"></i>
+                @ViewData["ErrorMessage"]
+            </div>
+        }
+
+        <div class="email-notification">
+            <div class="email-icon">
+                <i class="fas fa-envelope text-white" style="font-size: 20px;"></i>
+            </div>
+            <p style="color: #4a5568; margin-bottom: 5px; font-size: 14px;">We've sent a verification code to</p>
+            <p style="color: #2d3748; font-weight: 600; margin: 0;">@Model.Email</p>
+        </div>
+
+        <form asp-action="TwoFactor" method="post" id="twoFactorForm">
+            <input type="hidden" asp-for="Email" />
+
+            <div style="margin-bottom: 20px;">
+                <label asp-for="Token" class="form-label">Verification Code</label>
+                <input asp-for="Token" class="verification-input" id="tokenInput"
+                       placeholder="000000" maxlength="6" required
+                       autocomplete="one-time-code" inputmode="numeric" />
+                <span asp-validation-for="Token" class="text-danger"></span>
+            </div>
+
+            <button type="submit" class="btn-verify" id="verifyButton">
+                <span id="verifyText">
+                    <i class="fas fa-check me-2"></i>
+                    Verify Code
+                </span>
+                <span id="verifyingText" style="display: none;">
+                    <span class="spinner-border spinner-border-sm me-2"></span>
+                    Verifying...
+                </span>
+            </button>
+
+            <a href="@Url.Action("Login", "Account")" class="btn-back">
+                <i class="fas fa-arrow-left"></i>
+                <span>Back to Login</span>
+            </a>
+        </form>
+
+        <div class="resend-link">
+            <a href="@Url.Action("ResendCode", "Account", new { email = Model.Email })" id="resendLink">
+                <i class="fas fa-redo me-1"></i>
+                Resend verification code
+            </a>
+        </div>
+
+        <div class="countdown-timer" id="countdownTimer" style="display: none;">
+            <i class="fas fa-clock me-1"></i>
+            You can request a new code in <span id="countdown">60</span> seconds
+        </div>
+
+        <div class="security-note">
+            <i class="fas fa-info-circle me-2"></i>
+            For your security, this code will expire in 10 minutes. If you don't receive the code, check your spam folder.
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        let countdownActive = false;
+        let countdownSeconds = 60;
+
+        // Auto-focus on the token input
+        document.getElementById('tokenInput').focus();
+
+        // Format input to only allow numbers and auto-advance
+        document.getElementById('tokenInput').addEventListener('input', function(e) {
+            let value = e.target.value.replace(/\D/g, ''); // Remove non-digits
+            e.target.value = value;
+
+            // Auto-submit when 6 digits are entered
+            if (value.length === 6) {
+                setTimeout(() => {
+                    document.getElementById('twoFactorForm').submit();
+                }, 500);
+            }
+        });
+
+        // Handle form submission
+        document.getElementById('twoFactorForm').addEventListener('submit', function() {
+            const verifyButton = document.getElementById('verifyButton');
+            const verifyText = document.getElementById('verifyText');
+            const verifyingText = document.getElementById('verifyingText');
+
+            verifyButton.disabled = true;
+            verifyText.style.display = 'none';
+            verifyingText.style.display = 'inline-flex';
+        });
+
+        // Handle resend link
+        document.getElementById('resendLink').addEventListener('click', function(e) {
+            if (countdownActive) {
+                e.preventDefault();
+                return;
+            }
+
+            startCountdown();
+        });
+
+        function startCountdown() {
+            countdownActive = true;
+            countdownSeconds = 60;
+
+            const resendLink = document.getElementById('resendLink');
+            const countdownTimer = document.getElementById('countdownTimer');
+            const countdownSpan = document.getElementById('countdown');
+
+            resendLink.style.opacity = '0.5';
+            resendLink.style.pointerEvents = 'none';
+            countdownTimer.style.display = 'block';
+
+            const interval = setInterval(() => {
+                countdownSeconds--;
+                countdownSpan.textContent = countdownSeconds;
+
+                if (countdownSeconds <= 0) {
+                    clearInterval(interval);
+                    countdownActive = false;
+                    resendLink.style.opacity = '1';
+                    resendLink.style.pointerEvents = 'auto';
+                    countdownTimer.style.display = 'none';
+                }
+            }, 1000);
+        }
+
+        // Add shake animation on error
+        function shakeInput() {
+            const input = document.getElementById('tokenInput');
+            input.classList.add('shake');
+            setTimeout(() => {
+                input.classList.remove('shake');
+            }, 500);
+        }
+
+        // Check if there's an error and shake the input
+        @if (ViewData["ErrorMessage"] != null)
+        {
+                <text>
+                setTimeout(() => {
+                    shakeInput();
+                }, 100);
+                </text>
+        }
+
+        // Add smooth focus animations
+        document.getElementById('tokenInput').addEventListener('focus', function() {
+            this.style.transform = 'translateY(-2px) scale(1.02)';
+        });
+
+        document.getElementById('tokenInput').addEventListener('blur', function() {
+            this.style.transform = 'translateY(0) scale(1)';
+        });
+
+        // Paste support for verification codes
+        document.getElementById('tokenInput').addEventListener('paste', function(e) {
+            e.preventDefault();
+            const paste = (e.clipboardData || window.clipboardData).getData('text');
+            const numbers = paste.replace(/\D/g, '').substring(0, 6);
+            this.value = numbers;
+
+            if (numbers.length === 6) {
+                setTimeout(() => {
+                    document.getElementById('twoFactorForm').submit();
+                }, 500);
+            }
+        });
+    </script>
+}

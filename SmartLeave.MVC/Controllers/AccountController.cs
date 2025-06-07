@@ -1,64 +1,140 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Authentication;
+using Microsoft.AspNetCore.Authentication.Cookies;
+using Microsoft.AspNetCore.Mvc;
+using SmartLeave.API.DTOs;
 using SmartLeave.MVC.Models;
-using System.Text;
-using System.Text.Json;
+using System.IdentityModel.Tokens.Jwt;
+using System.Security.Claims;
 
 namespace SmartLeave.MVC.Controllers
 {
     public class AccountController : Controller
     {
-        private readonly IHttpClientFactory _httpClientFactory;
+        private readonly HttpClient _httpClient;
 
         public AccountController(IHttpClientFactory httpClientFactory)
         {
-            _httpClientFactory = httpClientFactory;
+            _httpClient = httpClientFactory.CreateClient("API");
         }
 
         [HttpGet]
-        public IActionResult Register()
-        {
-            return View();
-        }
+        public IActionResult Login() => View();
 
         [HttpPost]
-        public async Task<IActionResult> Register(RegisterViewModel model)
+        public async Task<IActionResult> Login(LoginViewModel model)
         {
             if (!ModelState.IsValid)
                 return View(model);
 
-            var client = _httpClientFactory.CreateClient();
-            var json = JsonSerializer.Serialize(model);
-            var content = new StringContent(json, Encoding.UTF8, "application/json");
-
-            var response = await client.PostAsync("https://localhost:5001/api/accounts/register", content);
-
-            if (response.IsSuccessStatusCode)
+            var response = await _httpClient.PostAsJsonAsync("api/Accounts/authenticate", new
             {
-                // Registration success — go to login page or notify user
-                TempData["Message"] = "Registered successfully! Please log in.";
-                return RedirectToAction("Login");
-            }
-            else
+                Email = model.Email,
+                Password = model.Password
+            });
+
+            if (!response.IsSuccessStatusCode)
             {
-                // Read errors from API
-                var responseBody = await response.Content.ReadAsStringAsync();
-                var result = JsonSerializer.Deserialize<RegistrationResponseDto>(responseBody,
-                    new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
-
-                foreach (var error in result.Errors)
-                {
-                    ModelState.AddModelError(string.Empty, error);
-                }
-
+                ModelState.AddModelError("", "Login failed");
                 return View(model);
             }
+
+            var result = await response.Content.ReadFromJsonAsync<AuthResponseDto>();
+
+            if (result.Is2FactorRequired)
+            {
+                TempData["email"] = model.Email;
+                return RedirectToAction("TwoFactor");
+            }
+
+            var handler = new JwtSecurityTokenHandler();
+            var token = handler.ReadJwtToken(result.Token);
+
+            var identity = new ClaimsIdentity(CookieAuthenticationDefaults.AuthenticationScheme, ClaimTypes.Name, ClaimTypes.Role);
+            identity.AddClaim(new Claim(ClaimTypes.Name, model.Email));
+
+            foreach (var roleClaim in token.Claims.Where(c => c.Type == ClaimTypes.Role))
+            {
+                identity.AddClaim(new Claim(ClaimTypes.Role, roleClaim.Value));
+            }
+
+
+            var principal = new ClaimsPrincipal(identity);
+            await HttpContext.SignInAsync(CookieAuthenticationDefaults.AuthenticationScheme, principal);
+
+            // Role-based redirection
+            if (principal.IsInRole("Admin"))
+                return RedirectToAction("Dashboard", "Admin");
+            if (principal.IsInRole("Manager"))
+                return RedirectToAction("Dashboard", "Manager");
+
+            return RedirectToAction("Dashboard", "Employee");
+        }
+        // This is already inside your SmartLeave.MVC.Controllers.AccountController
+        [HttpGet]
+        public IActionResult TwoFactor()
+        {
+            if (!TempData.ContainsKey("email"))
+                return RedirectToAction("Login");
+
+            return View(new TwoFactorViewModel
+            {
+                Email = TempData["email"]?.ToString()
+            });
         }
 
-        public class RegistrationResponseDto
+        [HttpPost]
+        public async Task<IActionResult> TwoFactor(TwoFactorViewModel model)
         {
-            public bool IsSuccessfulRegistration { get; set; }
-            public IEnumerable<string> Errors { get; set; }
+            if (!ModelState.IsValid)
+                return View(model);
+
+            var response = await _httpClient.PostAsJsonAsync("api/Accounts/twofactor", new
+            {
+                Email = model.Email,
+                Token = model.Token,
+                Provider = model.Provider
+            });
+
+            if (!response.IsSuccessStatusCode)
+            {
+                ModelState.AddModelError("", "Invalid token");
+                return View(model);
+            }
+
+            var result = await response.Content.ReadFromJsonAsync<AuthResponseDto>();
+
+            var handler = new JwtSecurityTokenHandler();
+            var token = handler.ReadJwtToken(result.Token);
+
+            var identity = new ClaimsIdentity(CookieAuthenticationDefaults.AuthenticationScheme, ClaimTypes.Name, ClaimTypes.Role);
+            identity.AddClaim(new Claim(ClaimTypes.Name, model.Email!));
+
+            foreach (var roleClaim in token.Claims)
+            {
+                Console.WriteLine($"JWT Claim: {roleClaim.Type} = {roleClaim.Value}");
+
+                if (roleClaim.Type == ClaimTypes.Role || roleClaim.Type.EndsWith("/role"))
+                {
+                    identity.AddClaim(new Claim(ClaimTypes.Role, roleClaim.Value));
+                }
+            }
+
+            foreach (var claim in identity.Claims)
+            {
+                Console.WriteLine($"Claim: {claim.Type} = {claim.Value}");
+            }
+
+
+            var principal = new ClaimsPrincipal(identity);
+            await HttpContext.SignInAsync(CookieAuthenticationDefaults.AuthenticationScheme, principal);
+
+            if (principal.IsInRole("Admin"))
+                return RedirectToAction("Dashboard", "Admin");
+            if (principal.IsInRole("Manager"))
+                return RedirectToAction("Dashboard", "Manager");
+
+            return RedirectToAction("Dashboard", "Employee");
         }
+
     }
 }
-
