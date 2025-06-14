@@ -22,14 +22,6 @@ namespace SmartLeave.DAL.Repositories
         public async Task<bool> AddLeaveAsync(Leave leave)
         {
             _context.Leaves.Add(leave);
-            var balance = await _context.LeaveBalances.FirstOrDefaultAsync(b =>
-                b.EmployeeId == leave.EmployeeId && b.LeaveTypeId == leave.LeaveTypeId);
-
-            if (balance == null) return false;
-
-            balance.UsedDays += leave.TotalDays;
-            balance.RemainingDays -= leave.TotalDays;
-
             await _context.SaveChangesAsync();
             return true;
         }
@@ -43,12 +35,15 @@ namespace SmartLeave.DAL.Repositories
                 l.StartDate <= end);
         }
 
-        public async Task<List<Leave>> GetLeavesByEmployeeIdAsync(string employeeId)
+        public async Task<List<Leave>> GetLeavesByEmployeeIdAsync(string employeeId, int skip, int take)
         {
             return await _context.Leaves
                 .Include(l => l.LeaveType)
                 .Include(l => l.ApprovedBy)
                 .Where(l => l.EmployeeId == employeeId)
+                .OrderByDescending(l => l.AppliedOn)
+                .Skip(skip)                            
+                .Take(take)
                 .ToListAsync();
         }
 
@@ -74,26 +69,20 @@ namespace SmartLeave.DAL.Repositories
                 .FirstOrDefaultAsync(l => l.Id == leaveId);
         }
 
-        public async Task<List<Leave>> GetPendingByTeamAsync(int teamId)
+        public async Task<List<Leave>> GetPendingByTeamAsync(int teamId, int skip, int take)
         {
             return await _context.Leaves
                 .Include(l => l.LeaveType)
                 .Include(l => l.Employee)
                 .Where(l => l.Status == LeaveStatus.Pending &&
                             l.Employee.TeamId == teamId)     // only employee’s team
+                .OrderBy(l => l.AppliedOn)
+                .Skip(skip)
+                .Take(take)
                 .ToListAsync();
         }
 
-        public async Task RestoreBalanceAsync(string employeeId, int leaveTypeId, decimal days)
-        {
-            var bal = await _context.LeaveBalances
-                        .FirstAsync(b => b.EmployeeId == employeeId &&
-                                         b.LeaveTypeId == leaveTypeId);
 
-            bal.UsedDays -= days;
-            bal.RemainingDays += days;
-           
-        }
 
         public async Task<bool> UpdateAsync(Leave leave)
         {
@@ -126,7 +115,7 @@ namespace SmartLeave.DAL.Repositories
             }
             if (!string.IsNullOrEmpty(f.ApproverId)) q = q.Where(l => l.ApprovedById == f.ApproverId);
             if (!string.IsNullOrEmpty(f.EmployeeId)) q = q.Where(l => l.EmployeeId == f.EmployeeId);
-
+            q = q.OrderBy(l => l.AppliedOn);
             return await q.ToListAsync();
         }
 

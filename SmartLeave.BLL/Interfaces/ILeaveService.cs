@@ -11,11 +11,11 @@ namespace SmartLeave.BLL.Interfaces
     public interface ILeaveService
     {
         //-------------------------------Employee---------------------------------
-        Task<bool> ApplyForLeaveAsync(string userEmail, LeaveRequestDto dto);
-        Task<List<LeaveResponseDto>> GetMyLeavesAsync(string userEmail);
+        Task<(bool Success, string Message)> ApplyForLeaveAsync(string userEmail, LeaveRequestDto dto);
+        Task<List<LeaveResponseDto>> GetMyLeavesAsync(string userEmail, int page = 1, int pageSize = 10);
         Task<List<LeaveBalanceDto>> GetMyLeaveBalancesAsync(string userEmail);
         //----------------------------------Manager--------------------------------
-        Task<List<LeaveResponseDto>> GetPendingForManagerAsync(string managerEmail);
+        Task<List<LeaveResponseDto>> GetPendingForManagerAsync(string managerEmail, int page = 1, int pageSize = 10);
         Task<bool> DecideAsync(string managerEmail, LeaveDecisionDto dto);
         //---------------------------------Admin------------------------------------
         Task<List<LeaveResponseDto>> GetReportAsync(LeaveReportFilterDto filter);

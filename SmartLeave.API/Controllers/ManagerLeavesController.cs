@@ -15,10 +15,10 @@ namespace SmartLeave.API.Controllers
         public ManagerLeavesController(ILeaveService service) => _service = service;
 
         [HttpGet("pending")]
-        public async Task<IActionResult> Pending()
+        public async Task<IActionResult> Pending([FromQuery] int page = 1, [FromQuery] int pageSize = 10)
         {
             var email = User.Identity!.Name!;
-            var list = await _service.GetPendingForManagerAsync(email);
+            var list = await _service.GetPendingForManagerAsync(email, page, pageSize);
             return Ok(list);
         }
 

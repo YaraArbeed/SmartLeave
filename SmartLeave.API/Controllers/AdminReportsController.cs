@@ -15,9 +15,9 @@ namespace SmartLeave.API.Controllers
         private readonly ILeaveService _svc;
         public AdminReportsController(ILeaveService svc) => _svc = svc;
 
-        // 1. POST filters → report
-        [HttpPost("leaves")]
-        public async Task<IActionResult> Leaves([FromBody] LeaveReportFilterDto f)
+        // 1. Get filters → report
+        [HttpGet("leaves")]
+        public async Task<IActionResult> Leaves([FromQuery] LeaveReportFilterDto f)
             => Ok(await _svc.GetReportAsync(f));
 
         // 2. decision

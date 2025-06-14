@@ -1,8 +1,11 @@
 ﻿using EmailService;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Configuration;
 using SmartLeave.BLL.Interfaces;
 using SmartLeave.Common.DTOs.Admin;
 using SmartLeave.Common.DTOs.Employee;
 using SmartLeave.Common.DTOs.Manager;
+using SmartLeave.Common.Validators;
 using SmartLeave.DAL.Entities;
 using SmartLeave.DAL.Repositories;
 using System;
@@ -18,67 +21,85 @@ namespace SmartLeave.BLL.Services
         private readonly ILeaveRepository _leaveRepo;
         private readonly IUserRepository _userRepo;
         private readonly IEmailSender _emailSender;
-        public LeaveService(ILeaveRepository leaveRepo, IUserRepository userRepo, IEmailSender emailSender)
+        private readonly LeaveValidator _validator;
+        private readonly string _attachmentBasePath;
+
+        public LeaveService(ILeaveRepository leaveRepo, IUserRepository userRepo, IEmailSender emailSender, LeaveValidator validator, IConfiguration config)
         {
             _leaveRepo = leaveRepo;
             _userRepo = userRepo;
             _emailSender = emailSender;
+            _validator = validator;
+            _attachmentBasePath = config["FileStorage:AttachmentPath"]!;
 
         }
 
-        public async Task<bool> ApplyForLeaveAsync(string userEmail, LeaveRequestDto dto)
+        public async Task<(bool Success, string Message)> ApplyForLeaveAsync(string userEmail, LeaveRequestDto dto)
         {
-            var employee = await _userRepo.GetUserByEmailAsync(userEmail);
-            if (employee == null) return false;
-
-            var overlap = await _leaveRepo.HasOverlappingLeave(employee.Id, dto.StartDate, dto.EndDate);
-            if (overlap) return false;
-
-            var days = (decimal)(dto.EndDate - dto.StartDate).TotalDays + 1;
-            var balance = await _leaveRepo.GetLeaveBalanceAsync(employee.Id, dto.LeaveTypeId);
-
-            if (balance.RemainingDays < days)
-                return false;
-
-            string? savedPath = null;
-            if (dto.Attachment != null)
+            try
             {
-                var uploadsFolder = Path.Combine("wwwroot", "attachments");
-                Directory.CreateDirectory(uploadsFolder);
+                var employee = await _userRepo.GetUserByEmailAsync(userEmail);
+                if (employee == null) return (false, "Employee not found.");
 
-                var fileName = $"{Guid.NewGuid()}_{dto.Attachment.FileName}";
-                var filePath = Path.Combine(uploadsFolder, fileName);
+                var (isValid, errorMessage) = await _validator.ValidateAsync(employee.Id, dto);
+                if (!isValid)
+                    return (false, errorMessage!);
 
-                using (var stream = new FileStream(filePath, FileMode.Create))
+                var days = (decimal)(dto.EndDate - dto.StartDate).TotalDays + 1;
+
+                string? savedPath = null;
+                if (dto.Attachment != null)
                 {
-                    await dto.Attachment.CopyToAsync(stream);
+                    Directory.CreateDirectory(_attachmentBasePath);
+
+                    var fileName = $"{Guid.NewGuid()}_{dto.Attachment.FileName}";
+                    var filePath = Path.Combine(_attachmentBasePath, fileName);
+
+                    using (var stream = new FileStream(filePath, FileMode.Create))
+                    {
+                        await dto.Attachment.CopyToAsync(stream);
+                    }
+
+                    savedPath = filePath; // Save the full secure path
                 }
 
-                savedPath = $"/attachments/{fileName}"; // URL-friendly path
+
+                var leave = new Leave
+                {
+                    EmployeeId = employee.Id,
+                    LeaveTypeId = dto.LeaveTypeId,
+                    StartDate = dto.StartDate,
+                    EndDate = dto.EndDate,
+                    TotalDays = days,
+                    Status = LeaveStatus.Pending,
+                    AppliedOn = DateTime.Now,
+                    Comment = dto.Comment,
+                    AttachmentUrl = savedPath,
+                    ApprovalNote = dto.ApprovalNote,
+                    ApprovedById = dto.ApprovedById
+                };
+
+                var success = await _leaveRepo.AddLeaveAsync(leave);
+                return success
+                    ? (true, "Leave submitted successfully.")
+                    : (false, "Failed to save leave request.");
             }
-
-            var leave = new Leave
+            catch (DbUpdateException ex) when (ex.InnerException?.Message.Contains("CK_Leave_StartBeforeEnd") == true)
             {
-                EmployeeId = employee.Id,
-                LeaveTypeId = dto.LeaveTypeId,
-                StartDate = dto.StartDate,
-                EndDate = dto.EndDate,
-                TotalDays = days,
-                Status = LeaveStatus.Pending,
-                AppliedOn = DateTime.Now,
-                Comment = dto.Comment,
-                AttachmentUrl = savedPath,
-                ApprovalNote = dto.ApprovalNote,
-                ApprovedById = dto.ApprovedById
-            };
-
-            return await _leaveRepo.AddLeaveAsync(leave);
+                return (false, "Start date must be before end date.");
+            }
+            catch (Exception)
+            {
+                return (false, "An unexpected error occurred. Please try again.");
+            }
         }
 
-        public async Task<List<LeaveResponseDto>> GetMyLeavesAsync(string userEmail)
+        public async Task<List<LeaveResponseDto>> GetMyLeavesAsync(string userEmail, int page = 1, int pageSize = 10)
         {
             var employee = await _userRepo.GetUserByEmailAsync(userEmail);
-            var leaves = await _leaveRepo.GetLeavesByEmployeeIdAsync(employee.Id);
+            var skip = (page - 1) * pageSize;
+
+            var leaves = await _leaveRepo.GetLeavesByEmployeeIdAsync(employee.Id, skip, pageSize);
             return leaves.Select(l => new LeaveResponseDto
             {
                 Id = l.Id,
@@ -109,11 +130,13 @@ namespace SmartLeave.BLL.Services
         }
 
         //-------------------------------------Manager---------------------------------------------------
-        public async Task<List<LeaveResponseDto>> GetPendingForManagerAsync(string mgrEmail)
+        public async Task<List<LeaveResponseDto>> GetPendingForManagerAsync(string mgrEmail, int page = 1, int pageSize = 10)
         {
             var manager = await _userRepo.GetUserByEmailAsync(mgrEmail);
-            var teamId = manager.TeamId ?? 0;                        
-            var leaves = await _leaveRepo.GetPendingByTeamAsync(teamId);
+            var teamId = manager.TeamId ?? 0;
+            var skip = (page - 1) * pageSize;
+
+            var leaves = await _leaveRepo.GetPendingByTeamAsync(teamId, skip, pageSize);
 
             return leaves.Select(l => new LeaveResponseDto
             {
@@ -141,9 +164,14 @@ namespace SmartLeave.BLL.Services
             if (leave.Employee.ManagerId != manager.Id) return false;
 
             // revert balance *only* on rejection
-            if (!dto.IsApproved)
-                await _leaveRepo.RestoreBalanceAsync(leave.EmployeeId, leave.LeaveTypeId, leave.TotalDays);
+            if (dto.IsApproved)
+            {
+                var balance = await _leaveRepo.GetLeaveBalanceAsync(leave.EmployeeId, leave.LeaveTypeId);
+                if (balance == null) return false;
 
+                balance.UsedDays += leave.TotalDays;
+                balance.RemainingDays -= leave.TotalDays;
+            }
             leave.Status = dto.IsApproved ? LeaveStatus.Approved : LeaveStatus.Rejected;
             leave.ApprovedById = manager.Id;
             leave.DecisionDate = DateTime.UtcNow;
@@ -198,9 +226,14 @@ namespace SmartLeave.BLL.Services
             if (leave == null || leave.Status != LeaveStatus.Pending) return false;
 
             // no team restriction for admin
-            if (!dto.IsApproved)
-                await _leaveRepo.RestoreBalanceAsync(leave.EmployeeId, leave.LeaveTypeId, leave.TotalDays);
+            if (dto.IsApproved)
+            {
+                var balance = await _leaveRepo.GetLeaveBalanceAsync(leave.EmployeeId, leave.LeaveTypeId);
+                if (balance == null) return false;
 
+                balance.UsedDays += leave.TotalDays;
+                balance.RemainingDays -= leave.TotalDays;
+            }
             // update fields
             leave.Status = dto.IsApproved ? LeaveStatus.Approved : LeaveStatus.Rejected;
             leave.ApprovedById = admin.Id;

@@ -10,6 +10,7 @@ using SmartLeave.API.Mapping;
 using SmartLeave.API.PasswordValidator;
 using SmartLeave.BLL.Interfaces;
 using SmartLeave.BLL.Services;
+using SmartLeave.Common.Validators;
 using SmartLeave.DAL.Data;
 using SmartLeave.DAL.Entities;
 using SmartLeave.DAL.Repositories;
@@ -83,6 +84,7 @@ builder.Services.Configure<FormOptions>(o => {
     o.MultipartBodyLengthLimit = int.MaxValue;
     o.MemoryBufferThreshold = int.MaxValue;
 });
+builder.Services.AddScoped<LeaveValidator>();
 builder.Services.AddScoped<ILeaveBalanceService, LeaveBalanceService>();
 builder.Services.AddScoped<ILeaveService, LeaveService>();
 builder.Services.AddScoped<ILeaveRepository, LeaveRepository>();

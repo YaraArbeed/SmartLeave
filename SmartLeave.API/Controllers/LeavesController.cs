@@ -21,15 +21,21 @@ namespace SmartLeave.API.Controllers
         public async Task<IActionResult> RequestLeave([FromForm] LeaveRequestDto dto)
         {
             var email = User.Identity!.Name!;
-            var result = await _leaveService.ApplyForLeaveAsync(email, dto);
-            return result ? Ok("Leave submitted successfully") : BadRequest("Not enough balance or overlapping dates");
+            var (success, message) = await _leaveService.ApplyForLeaveAsync(email, dto);
+
+            if (!success)
+                return BadRequest(new { success = false, message });
+
+            return Ok(new { success = true, message });
         }
 
+
+
         [HttpGet("mine")]
-        public async Task<IActionResult> GetMyLeaves()
+        public async Task<IActionResult> GetMyLeaves([FromQuery] int page = 1, [FromQuery] int pageSize = 10)
         {
             var email = User.Identity!.Name!;
-            var leaves = await _leaveService.GetMyLeavesAsync(email);
+            var leaves = await _leaveService.GetMyLeavesAsync(email,page,pageSize);
             return Ok(leaves);
         }
 
