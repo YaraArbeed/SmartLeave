@@ -1,29 +1,897 @@
-﻿@{
+﻿@model AdminDashboardViewModel
+@{
     ViewData["Title"] = "Admin Dashboard";
     Layout = "_Layout";
 }
 
-<div class="container-fluid px-4 py-4">
-    <!-- Header -->
-    <div class="d-flex justify-content-between align-items-center mb-4">
-        <h1 class="h3 mb-0 text-gray-800">Admin Dashboard</h1>
-        <div class="d-flex gap-2">
-            <button class="btn btn-light rounded-circle" title="Notifications">
-                <i class="fas fa-bell"></i>
-            </button>
-            <button class="btn btn-light rounded-circle" title="Settings">
-                <i class="fas fa-cog"></i>
-            </button>
-            <button class="btn btn-light rounded-circle" title="Logout">
-                <i class="fas fa-sign-out-alt"></i>
-            </button>
+<style>
+    .admin-container {
+        background: linear-gradient(135deg, #764ba2 0%, #667eea 100%);
+        min-height: 100vh;
+        padding: 0;
+        margin: 0;
+        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    }
+
+    .sidebar {
+        background: rgba(255, 255, 255, 0.95);
+        backdrop-filter: blur(10px);
+        border-right: none;
+        min-height: 100vh;
+        padding: 0;
+        position: fixed;
+        width: 220px;
+        z-index: 1000;
+        box-shadow: 4px 0 20px rgba(0, 0, 0, 0.1);
+        border-radius: 0 20px 20px 0;
+    }
+
+    .sidebar-header {
+        padding: 20px 15px;
+        text-align: center;
+        border-bottom: 1px solid rgba(102, 126, 234, 0.1);
+    }
+
+        .sidebar-header h3 {
+            color: #2d3748;
+            font-weight: 700;
+            margin: 0;
+            font-size: 20px;
+        }
+
+        .sidebar-header p {
+            color: #718096;
+            margin: 5px 0 0 0;
+            font-size: 12px;
+        }
+
+    .sidebar-item {
+        padding: 12px 15px;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        font-weight: 500;
+        color: #4a5568;
+        border-left: 4px solid transparent;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        margin: 3px 10px;
+        border-radius: 8px;
+        font-size: 14px;
+    }
+
+        .sidebar-item:hover {
+            background: rgba(102, 126, 234, 0.1);
+            color: #667eea;
+            transform: translateX(3px);
+        }
+
+        .sidebar-item.active {
+            background: linear-gradient(135deg, #764ba2 0%, #667eea 100%);
+            color: white;
+            border-left-color: #667eea;
+            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
+        }
+
+    .main-content {
+        margin-left: 220px;
+        padding: 20px;
+        max-width: 1400px;
+    }
+
+    .admin-header {
+        margin-bottom: 30px;
+    }
+
+    .admin-title {
+        color: white;
+        font-size: 28px;
+        font-weight: 700;
+        text-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+    }
+
+    .filter-panel {
+        background: white;
+        border-radius: 15px;
+        padding: 20px;
+        margin-bottom: 30px;
+        box-shadow: 0 15px 30px rgba(0, 0, 0, 0.1);
+    }
+
+    .filter-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 20px;
+    }
+
+    .filter-title {
+        font-size: 18px;
+        font-weight: 600;
+        color: #2d3748;
+    }
+
+    .filter-reset {
+        background: none;
+        border: 1px solid #e2e8f0;
+        padding: 8px 16px;
+        border-radius: 8px;
+        font-weight: 500;
+        color: #4a5568;
+        cursor: pointer;
+        transition: all 0.3s ease;
+    }
+
+        .filter-reset:hover {
+            background: #f7fafc;
+            border-color: #cbd5e0;
+        }
+
+    .filter-grid {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 20px;
+    }
+
+    .filter-group {
+        margin-bottom: 15px;
+    }
+
+    .filter-label {
+        display: block;
+        margin-bottom: 8px;
+        font-weight: 500;
+        color: #4a5568;
+        font-size: 14px;
+    }
+
+    .filter-input {
+        width: 100%;
+        padding: 10px;
+        border: 1px solid #e2e8f0;
+        border-radius: 8px;
+        font-size: 14px;
+        transition: all 0.3s ease;
+    }
+
+        .filter-input:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+
+    .filter-select {
+        width: 100%;
+        padding: 10px;
+        border: 1px solid #e2e8f0;
+        border-radius: 8px;
+        font-size: 14px;
+        transition: all 0.3s ease;
+        background-color: white;
+    }
+
+        .filter-select:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+
+    .filter-submit {
+        background: linear-gradient(135deg, #764ba2 0%, #667eea 100%);
+        color: white;
+        border: none;
+        padding: 12px;
+        border-radius: 8px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        width: 100%;
+        margin-top: 24px;
+    }
+
+        .filter-submit:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(102, 126, 234, 0.4);
+        }
+
+    .leaves-table {
+        background: white;
+        border-radius: 15px;
+        overflow: hidden;
+        box-shadow: 0 15px 30px rgba(0, 0, 0, 0.1);
+        margin-bottom: 30px;
+    }
+
+    .table {
+        width: 100%;
+        border-collapse: collapse;
+    }
+
+        .table th {
+            background: #f8fafc;
+            padding: 15px;
+            text-align: left;
+            font-weight: 600;
+            color: #4a5568;
+            border-bottom: 1px solid #e2e8f0;
+        }
+
+        .table td {
+            padding: 15px;
+            border-bottom: 1px solid #e2e8f0;
+            color: #2d3748;
+        }
+
+        .table tr:last-child td {
+            border-bottom: none;
+        }
+
+        .table tr:hover {
+            background: #f8fafc;
+        }
+
+    .status-badge {
+        display: inline-block;
+        padding: 6px 12px;
+        border-radius: 20px;
+        font-size: 12px;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+
+    .status-pending {
+        background: #fef3c7;
+        color: #92400e;
+        border: 1px solid #fbbf24;
+    }
+
+    .status-approved {
+        background: #d1fae5;
+        color: #065f46;
+        border: 1px solid #10b981;
+    }
+
+    .status-rejected {
+        background: #fee2e2;
+        color: #991b1b;
+        border: 1px solid #ef4444;
+    }
+
+    .action-buttons {
+        display: flex;
+        gap: 8px;
+    }
+
+    .btn-approve {
+        background: #10b981;
+        color: white;
+        border: none;
+        padding: 8px 12px;
+        border-radius: 6px;
+        font-weight: 500;
+        font-size: 12px;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        display: flex;
+        align-items: center;
+        gap: 4px;
+    }
+
+        .btn-approve:hover {
+            background: #059669;
+        }
+
+    .btn-reject {
+        background: #ef4444;
+        color: white;
+        border: none;
+        padding: 8px 12px;
+        border-radius: 6px;
+        font-weight: 500;
+        font-size: 12px;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        display: flex;
+        align-items: center;
+        gap: 4px;
+    }
+
+        .btn-reject:hover {
+            background: #dc2626;
+        }
+
+    .processed-text {
+        color: #718096;
+        font-size: 12px;
+        font-style: italic;
+    }
+
+    .alert-custom {
+        padding: 15px 20px;
+        margin-bottom: 25px;
+        border-radius: 10px;
+        border: none;
+        font-weight: 500;
+        display: flex;
+        align-items: center;
+        gap: 12px;
+    }
+
+    .alert-success {
+        background: linear-gradient(135deg, #d1fae5 0%, #a7f3d0 100%);
+        color: #065f46;
+        box-shadow: 0 4px 12px rgba(16, 185, 129, 0.2);
+    }
+
+    .alert-error {
+        background: linear-gradient(135deg, #fee2e2 0%, #fecaca 100%);
+        color: #991b1b;
+        box-shadow: 0 4px 12px rgba(239, 68, 68, 0.2);
+    }
+
+    .empty-state {
+        text-align: center;
+        padding: 60px 20px;
+        background: white;
+        border-radius: 16px;
+        box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+    }
+
+    .empty-icon {
+        font-size: 64px;
+        color: #cbd5e0;
+        margin-bottom: 20px;
+    }
+
+    .empty-title {
+        font-size: 24px;
+        font-weight: 600;
+        color: #4a5568;
+        margin-bottom: 8px;
+    }
+
+    .empty-description {
+        color: #718096;
+        font-size: 16px;
+    }
+
+    .decision-modal {
+        display: none;
+        position: fixed;
+        z-index: 1000;
+        left: 0;
+        top: 0;
+        width: 100%;
+        height: 100%;
+        background-color: rgba(0, 0, 0, 0.5);
+        backdrop-filter: blur(5px);
+    }
+
+    .modal-content {
+        background-color: white;
+        margin: 10% auto;
+        padding: 30px;
+        border-radius: 16px;
+        width: 90%;
+        max-width: 500px;
+        box-shadow: 0 25px 50px rgba(0, 0, 0, 0.25);
+        animation: modalSlideIn 0.3s ease-out;
+    }
+
+    @@keyframes modalSlideIn {
+        from
+
+    {
+        opacity: 0;
+        transform: translateY(-50px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+
+    }
+
+    .modal-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 20px;
+        padding-bottom: 15px;
+        border-bottom: 1px solid #e2e8f0;
+    }
+
+    .modal-title {
+        font-size: 20px;
+        font-weight: 600;
+        color: #2d3748;
+        margin: 0;
+    }
+
+    .close-btn {
+        background: none;
+        border: none;
+        font-size: 24px;
+        cursor: pointer;
+        color: #718096;
+        padding: 0;
+        width: 30px;
+        height: 30px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 50%;
+        transition: all 0.2s ease;
+    }
+
+        .close-btn:hover {
+            background: #f7fafc;
+            color: #2d3748;
+        }
+
+    .form-group {
+        margin-bottom: 20px;
+    }
+
+    .form-label {
+        display: block;
+        margin-bottom: 8px;
+        font-weight: 600;
+        color: #4a5568;
+    }
+
+    .form-control {
+        width: 100%;
+        padding: 12px;
+        border: 2px solid #e2e8f0;
+        border-radius: 8px;
+        font-size: 14px;
+        transition: all 0.3s ease;
+        resize: vertical;
+        min-height: 100px;
+    }
+
+        .form-control:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+
+    .modal-actions {
+        display: flex;
+        gap: 12px;
+        margin-top: 25px;
+    }
+
+    .btn-submit {
+        background: linear-gradient(135deg, #764ba2 0%, #667eea 100%);
+        color: white;
+        border: none;
+        padding: 12px 24px;
+        border-radius: 8px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        flex: 1;
+    }
+
+        .btn-submit:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(102, 126, 234, 0.4);
+        }
+
+    .btn-cancel {
+        background: #f7fafc;
+        color: #4a5568;
+        border: 1px solid #e2e8f0;
+        padding: 12px 24px;
+        border-radius: 8px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        flex: 1;
+    }
+
+        .btn-cancel:hover {
+            background: #edf2f7;
+            border-color: #cbd5e0;
+        }
+
+    @@media (max-width: 1200px) {
+        .filter-grid
+
+    {
+        grid-template-columns: repeat(2, 1fr);
+    }
+
+    }
+
+    @@media (max-width: 768px) {
+        .main-content
+
+    {
+        margin-left: 0;
+        padding: 15px;
+    }
+
+    .sidebar {
+        display: none;
+    }
+
+    .filter-grid {
+        grid-template-columns: 1fr;
+    }
+
+    }
+</style>
+
+<div class="admin-container">
+    <!-- Sidebar -->
+    <div class="sidebar">
+        <div class="sidebar-header">
+            <h3>SmartLeave</h3>
+            <p>Admin Portal</p>
+        </div>
+
+        <div class="sidebar-item active">
+            <i class="fas fa-clipboard-list"></i>
+            <span>Leave Requests</span>
+        </div>
+        <div class="sidebar-item" onclick="alert('Employees section coming soon!')">
+            <i class="fas fa-users"></i>
+            <span>Employees</span>
+        </div>
+        <div class="sidebar-item" onclick="alert('Reports section coming soon!')">
+            <i class="fas fa-chart-bar"></i>
+            <span>Reports</span>
+        </div>
+        <div class="sidebar-item" onclick="alert('Settings section coming soon!')">
+            <i class="fas fa-cog"></i>
+            <span>Settings</span>
         </div>
     </div>
 
-    <!-- Welcome Section -->
-    <div class="mb-4">
-        <h2 class="h4 mb-1">Welcome back, Admin! 👋</h2>
-        <p class="text-muted">Here's what's happening with your platform today.</p>
-    </div>
+    <!-- Main Content -->
+    <div class="main-content">
+        <div class="admin-header">
+            <h1 class="admin-title">Welcome, @Model.AdminName! 👨‍💼</h1>
+        </div>
 
-   
+        @if (TempData["SuccessMessage"] != null)
+        {
+            <div class="alert-custom alert-success">
+                <i class="fas fa-check-circle"></i>
+                @TempData["SuccessMessage"]
+            </div>
+        }
+
+        @if (TempData["ErrorMessage"] != null)
+        {
+            <div class="alert-custom alert-error">
+                <i class="fas fa-exclamation-triangle"></i>
+                @TempData["ErrorMessage"]
+            </div>
+        }
+
+        <!-- Filter Panel -->
+        <div class="filter-panel">
+            <div class="filter-header">
+                <h2 class="filter-title">Filter Leave Requests</h2>
+                <a href="@Url.Action("Dashboard", "Admin")" class="filter-reset">Reset Filters</a>
+            </div>
+
+            <form method="get" action="@Url.Action("Dashboard", "Admin")">
+                <div class="filter-grid">
+                    <div class="filter-group">
+                        <label class="filter-label">Date Range (Start)</label>
+                        <input type="date" name="StartDate" class="filter-input" value="@(Model.Filter.StartDate?.ToString("yyyy-MM-dd"))" />
+                    </div>
+                    <div class="filter-group">
+                        <label class="filter-label">Date Range (End)</label>
+                        <input type="date" name="EndDate" class="filter-input" value="@(Model.Filter.EndDate?.ToString("yyyy-MM-dd"))" />
+                    </div>
+                    <div class="filter-group">
+                        <label class="filter-label">Employee</label>
+                        <select name="EmployeeId" class="filter-select">
+                            <option value="">All Employees</option>
+                            @if (Model.FilterOptions.Employees != null)
+                            {
+                                foreach (var employee in Model.FilterOptions.Employees)
+                                {
+                                    if (Model.Filter.EmployeeId == employee.Value)
+                                    {
+                                        <option value="@employee.Value" selected>@employee.Text</option>
+                                    }
+                                    else
+                                    {
+                                        <option value="@employee.Value">@employee.Text</option>
+                                    }
+                                }
+                            }
+                        </select>
+                    </div>
+                    <div class="filter-group">
+                        <label class="filter-label">Team</label>
+                        <select name="TeamId" class="filter-select">
+                            <option value="">All Teams</option>
+                            @if (Model.FilterOptions.Teams != null)
+                            {
+                                foreach (var team in Model.FilterOptions.Teams)
+                                {
+                                    if (Model.Filter.TeamId.HasValue && Model.Filter.TeamId.Value.ToString() == team.Value)
+                                    {
+                                        <option value="@team.Value" selected>@team.Text</option>
+                                    }
+                                    else
+                                    {
+                                        <option value="@team.Value">@team.Text</option>
+                                    }
+                                }
+                            }
+                        </select>
+                    </div>
+                    <div class="filter-group">
+                        <label class="filter-label">Status</label>
+                        <select name="Status" class="filter-select">
+                            <option value="">All Statuses</option>
+                            @if (Model.FilterOptions.Statuses != null)
+                            {
+                                foreach (var status in Model.FilterOptions.Statuses)
+                                {
+                                    if (Model.Filter.Status == status.Value)
+                                    {
+                                        <option value="@status.Value" selected>@status.Text</option>
+                                    }
+                                    else
+                                    {
+                                        <option value="@status.Value">@status.Text</option>
+                                    }
+                                }
+                            }
+                        </select>
+                    </div>
+                    <div class="filter-group">
+                        <label class="filter-label">Leave Type</label>
+                        <select name="LeaveTypeId" class="filter-select">
+                            <option value="">All Types</option>
+                            @if (Model.FilterOptions.LeaveTypes != null)
+                            {
+                                foreach (var leaveType in Model.FilterOptions.LeaveTypes)
+                                {
+                                    if (Model.Filter.LeaveTypeId.HasValue && Model.Filter.LeaveTypeId.Value.ToString() == leaveType.Value)
+                                    {
+                                        <option value="@leaveType.Value" selected>@leaveType.Text</option>
+                                    }
+                                    else
+                                    {
+                                        <option value="@leaveType.Value">@leaveType.Text</option>
+                                    }
+                                }
+                            }
+                        </select>
+                    </div>
+                    <div class="filter-group">
+                        <label class="filter-label">Office</label>
+                        <select name="OfficeId" class="filter-select">
+                            <option value="">All Offices</option>
+                            @if (Model.FilterOptions.Offices != null)
+                            {
+                                foreach (var office in Model.FilterOptions.Offices)
+                                {
+                                    if (Model.Filter.OfficeId.HasValue && Model.Filter.OfficeId.Value.ToString() == office.Value)
+                                    {
+                                        <option value="@office.Value" selected>@office.Text</option>
+                                    }
+                                    else
+                                    {
+                                        <option value="@office.Value">@office.Text</option>
+                                    }
+                                }
+                            }
+                        </select>
+                    </div>
+                    <div class="filter-group">
+                        <label class="filter-label">Country</label>
+                        <select name="CountryId" class="filter-select">
+                            <option value="">All Countries</option>
+                            @if (Model.FilterOptions.Countries != null)
+                            {
+                                foreach (var country in Model.FilterOptions.Countries)
+                                {
+                                    if (Model.Filter.CountryId.HasValue && Model.Filter.CountryId.Value.ToString() == country.Value)
+                                    {
+                                        <option value="@country.Value" selected>@country.Text</option>
+                                    }
+                                    else
+                                    {
+                                        <option value="@country.Value">@country.Text</option>
+                                    }
+                                }
+                            }
+                        </select>
+                    </div>
+                    <div class="filter-group">
+                        <label class="filter-label">Approver</label>
+                        <select name="ApproverId" class="filter-select">
+                            <option value="">All Approvers</option>
+                            @if (Model.FilterOptions.Approvers != null)
+                            {
+                                foreach (var approver in Model.FilterOptions.Approvers)
+                                {
+                                    if (Model.Filter.ApproverId == approver.Value)
+                                    {
+                                        <option value="@approver.Value" selected>@approver.Text</option>
+                                    }
+                                    else
+                                    {
+                                        <option value="@approver.Value">@approver.Text</option>
+                                    }
+                                }
+                            }
+                        </select>
+                    </div>
+                </div>
+                <button type="submit" class="filter-submit">
+                    <i class="fas fa-filter"></i>
+                    Apply Filters
+                </button>
+            </form>
+        </div>
+
+        <!-- Leave Requests Table -->
+        @if (Model.AllLeaves.Any())
+        {
+            <div class="leaves-table">
+                <table class="table">
+                    <thead>
+                        <tr>
+                            <th>Employee</th>
+                            <th>Leave Type</th>
+                            <th>Date Range</th>
+                            <th>Days</th>
+                            <th>Status</th>
+                            <th>Approver</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var leave in Model.AllLeaves)
+                        {
+                            <tr>
+                                <td>@leave.AppliedBy</td>
+                                <td>@leave.LeaveType</td>
+                                <td>@leave.StartDate.ToString("MMM dd") - @leave.EndDate.ToString("MMM dd, yyyy")</td>
+                                <td>@leave.TotalDays</td>
+                                <td>
+                                    @{
+                                        var statusClass = leave.Status.ToLower() switch
+                                        {
+                                            "pending" => "status-pending",
+                                            "approved" => "status-approved",
+                                            "rejected" => "status-rejected",
+                                            _ => "status-pending"
+                                        };
+                                    }
+                                    <span class="status-badge @statusClass">@leave.Status</span>
+                                </td>
+                                <td>@(string.IsNullOrEmpty(leave.ManagerName) ? "-" : leave.ManagerName)</td>
+                                <td>
+                                    @if (leave.Status.ToLower() == "pending")
+                                    {
+                                        <div class="action-buttons">
+                                            <button class="btn-approve" onclick="openDecisionModal(@leave.Id, '@(leave.AppliedBy?.Replace("'", "\\'") ?? "Unknown Employee")', true)">
+                                                <i class="fas fa-check"></i>
+                                                Approve
+                                            </button>
+                                            <button class="btn-reject" onclick="openDecisionModal(@leave.Id, '@(leave.AppliedBy?.Replace("'", "\\'") ?? "Unknown Employee")', false)">
+                                                <i class="fas fa-times"></i>
+                                                Reject
+                                            </button>
+                                        </div>
+                                    }
+                                    else
+                                    {
+                                        <span class="processed-text">Processed</span>
+                                    }
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        }
+        else
+        {
+            <div class="empty-state">
+                <div class="empty-icon">
+                    <i class="fas fa-clipboard-list"></i>
+                </div>
+                <h2 class="empty-title">No Leave Requests Found</h2>
+                <p class="empty-description">Try adjusting your filters or check back later.</p>
+            </div>
+        }
+    </div>
+</div>
+
+<!-- Decision Modal -->
+<div id="decisionModal" class="decision-modal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h3 class="modal-title" id="modalTitle">Approve Leave Request</h3>
+            <button class="close-btn" onclick="closeDecisionModal()">&times;</button>
+        </div>
+
+        <form id="decisionForm" method="post" action="@Url.Action("ProcessLeaveDecision", "Admin")">
+            <input type="hidden" id="leaveId" name="LeaveId" />
+            <input type="hidden" id="isApproved" name="IsApproved" />
+
+            <div class="form-group">
+                <label class="form-label" id="noteLabel">Approval Note:</label>
+                <textarea id="note" name="Note" class="form-control" placeholder="Add a note for the employee..." required></textarea>
+            </div>
+
+            <div class="modal-actions">
+                <button type="submit" class="btn-submit" id="submitBtn">
+                    <i class="fas fa-check"></i>
+                    Approve Request
+                </button>
+                <button type="button" class="btn-cancel" onclick="closeDecisionModal()">Cancel</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+    function openDecisionModal(leaveId, employeeName, isApproved) {
+        document.getElementById('leaveId').value = leaveId;
+        document.getElementById('isApproved').value = isApproved;
+
+        const modal = document.getElementById('decisionModal');
+        const title = document.getElementById('modalTitle');
+        const noteLabel = document.getElementById('noteLabel');
+        const submitBtn = document.getElementById('submitBtn');
+        const noteField = document.getElementById('note');
+
+        // Handle empty employee name
+        const displayName = employeeName || 'Unknown Employee';
+
+        if (isApproved) {
+            title.textContent = `Approve Leave Request - ${displayName}`;
+            noteLabel.textContent = 'Approval Note:';
+            submitBtn.innerHTML = '<i class="fas fa-check"></i> Approve Request';
+            submitBtn.style.background = 'linear-gradient(135deg, #10b981 0%, #059669 100%)';
+            noteField.placeholder = 'Add an approval note for the employee...';
+        } else {
+            title.textContent = `Reject Leave Request - ${displayName}`;
+            noteLabel.textContent = 'Rejection Reason:';
+            submitBtn.innerHTML = '<i class="fas fa-times"></i> Reject Request';
+            submitBtn.style.background = 'linear-gradient(135deg, #ef4444 0%, #dc2626 100%)';
+            noteField.placeholder = 'Please provide a reason for rejection...';
+        }
+
+        noteField.value = '';
+        modal.style.display = 'block';
+        noteField.focus();
+    }
+
+    function closeDecisionModal() {
+        document.getElementById('decisionModal').style.display = 'none';
+    }
+
+    // Close modal when clicking outside
+    window.onclick = function(event) {
+        const modal = document.getElementById('decisionModal');
+        if (event.target === modal) {
+            closeDecisionModal();
+        }
+    }
+
+    // Close modal with Escape key
+    document.addEventListener('keydown', function(event) {
+        if (event.key === 'Escape') {
+            closeDecisionModal();
+        }
+    });
+</script>

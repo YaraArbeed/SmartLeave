@@ -52,21 +52,21 @@ namespace SmartLeave.DAL.Migrations
                         new
                         {
                             Id = "639de03f-7876-4fff-96ec-37f8bd3bf180",
-                            ConcurrencyStamp = "b90b2caf-8ba7-4b5d-a1ec-97eb7ce1cb26",
+                            ConcurrencyStamp = "f725b07a-b8e2-414f-904d-c51ece4344a0",
                             Name = "Employee",
                             NormalizedName = "EMPLOYEE"
                         },
                         new
                         {
                             Id = "45deb9d6-c1ae-44a0-03b-c9a5cfc15f2f",
-                            ConcurrencyStamp = "b7dfd0b2-429b-4826-b513-9111948f9c2a",
+                            ConcurrencyStamp = "ec6b2285-ff6a-42c7-a3da-0d71564f0078",
                             Name = "Admin",
                             NormalizedName = "ADMIN"
                         },
                         new
                         {
                             Id = "e7f2b8d4-3c19-4e5a-9a7d-2fb8c6e117a3",
-                            ConcurrencyStamp = "25033842-ebbd-43ac-955f-5554df8f9191",
+                            ConcurrencyStamp = "9b1a026e-967d-4abb-b4c6-0db7a3995407",
                             Name = "Manager",
                             NormalizedName = "MANAGER"
                         });
@@ -289,16 +289,13 @@ namespace SmartLeave.DAL.Migrations
                         .HasColumnType("datetime2");
 
                     b.Property<string>("ApprovalNote")
-                        .IsRequired()
                         .HasMaxLength(500)
                         .HasColumnType("nvarchar(500)");
 
                     b.Property<string>("ApprovedById")
-                        .IsRequired()
                         .HasColumnType("nvarchar(450)");
 
                     b.Property<string>("AttachmentUrl")
-                        .IsRequired()
                         .HasMaxLength(255)
                         .HasColumnType("nvarchar(255)");
 
@@ -649,8 +646,7 @@ namespace SmartLeave.DAL.Migrations
                     b.HasOne("SmartLeave.DAL.Entities.User", "ApprovedBy")
                         .WithMany("LeavesApproved")
                         .HasForeignKey("ApprovedById")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
+                        .OnDelete(DeleteBehavior.Restrict);
 
                     b.HasOne("SmartLeave.DAL.Entities.User", "Employee")
                         .WithMany("LeavesApplied")

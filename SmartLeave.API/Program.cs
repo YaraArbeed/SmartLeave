@@ -1,3 +1,4 @@
+using AutoMapper;
 using EmailService;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Http.Features;
@@ -7,30 +8,33 @@ using Microsoft.IdentityModel.Tokens;
 using SmartLeave.API.JwtFeaturs;
 using SmartLeave.API.Mapping;
 using SmartLeave.API.PasswordValidator;
+using SmartLeave.BLL.Interfaces;
+using SmartLeave.BLL.Services;
 using SmartLeave.DAL.Data;
 using SmartLeave.DAL.Entities;
+using SmartLeave.DAL.Repositories;
 using System.Text;
-using AutoMapper;
 
 
 var builder = WebApplication.CreateBuilder(args);
 
-// Add services to the container.
-// -----------------------------------------------------
-// 1. Add DbContext (EF Core + SQL Server)
-// -----------------------------------------------------
+
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
     options.UseSqlServer(
         builder.Configuration.GetConnectionString("DefaultConnection")));
-// In SmartLeave.API/Program.cs:
+builder.Services.AddStackExchangeRedisCache(options =>
+{
+    options.Configuration = builder.Configuration["RedisCacheOptions:Configuration"];
+    options.InstanceName = builder.Configuration["RedisCacheOptions:InstanceName"];
+});
+
+
 builder.Services.AddAutoMapper(typeof(Program));
 
-// -----------------------------------------------------
-// 2. Add Identity
-// -----------------------------------------------------
+
 builder.Services.AddIdentity<User, IdentityRole>(options =>
 {
-    // (Optional) Password, lockout, user settings
+
     options.Password.RequireDigit = true;
     options.Password.RequiredLength = 6;
     options.User.RequireUniqueEmail = true;
@@ -79,6 +83,11 @@ builder.Services.Configure<FormOptions>(o => {
     o.MultipartBodyLengthLimit = int.MaxValue;
     o.MemoryBufferThreshold = int.MaxValue;
 });
+builder.Services.AddScoped<ILeaveBalanceService, LeaveBalanceService>();
+builder.Services.AddScoped<ILeaveService, LeaveService>();
+builder.Services.AddScoped<ILeaveRepository, LeaveRepository>();
+builder.Services.AddScoped<IUserRepository, UserRepository>();
+builder.Services.AddScoped<IPublicHolidayService, PublicHolidayService>();
 
 builder.Services.AddControllers();
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle

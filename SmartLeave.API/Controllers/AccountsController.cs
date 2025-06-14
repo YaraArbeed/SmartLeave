@@ -7,6 +7,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.WebUtilities;
 using SmartLeave.API.DTOs;
 using SmartLeave.API.JwtFeaturs;
+using SmartLeave.BLL.Interfaces;
 using SmartLeave.DAL.Entities;
 
 namespace SmartLeave.API.Controllers
@@ -20,12 +21,15 @@ namespace SmartLeave.API.Controllers
         private readonly UserManager<User> _userManager;
         private readonly JwtHandler _jwtHandler;
         private readonly IEmailSender _emailSender;
-        public AccountsController(IMapper mapper, UserManager<User> userManager, JwtHandler jwtHandler, IEmailSender emailSender)
+        private readonly ILeaveBalanceService _balanceService;
+
+        public AccountsController(IMapper mapper, UserManager<User> userManager, JwtHandler jwtHandler, IEmailSender emailSender, ILeaveBalanceService balanceService)
         {
             _mapper = mapper;
             _userManager = userManager;
             _jwtHandler = jwtHandler;
             _emailSender = emailSender;
+            _balanceService = balanceService;
         }
         [HttpPost("Register")]
         public async Task<IActionResult> RegisterUser([FromBody] UserForRegistrationDto userForRegistration)
@@ -62,6 +66,7 @@ namespace SmartLeave.API.Controllers
             await _userManager.SetTwoFactorEnabledAsync(user, true);
 
             await _userManager.AddToRoleAsync(user, userForRegistration.Role);
+            await _balanceService.InitializeForUserAsync(user);
             return StatusCode(201);
           
             

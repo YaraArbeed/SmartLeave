@@ -18,10 +18,7 @@ namespace SmartLeave.DAL.Data
            : base(options)
         {
         }
-
-        // ─── DbSet for each table ─────────────────────────────────────────────────────────
-
-        public DbSet<User> Users { get; set; }                   // Identity’s AspNetUsers
+        public DbSet<User> Users { get; set; }                  
         public DbSet<Country> Countries { get; set; }
         public DbSet<Office> Offices { get; set; }
         public DbSet<Team> Teams { get; set; }
@@ -33,7 +30,7 @@ namespace SmartLeave.DAL.Data
         public DbSet<AuditLog> AuditLogs { get; set; }
         protected override void OnModelCreating(ModelBuilder builder)
         {
-            // IMPORTANT: let Identity configure its own tables first
+            
             base.OnModelCreating(builder);
             builder.ApplyConfiguration(new RoleConfiguration());
             //

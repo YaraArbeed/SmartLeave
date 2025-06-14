@@ -1,29 +1,766 @@
-﻿@{
+﻿@model EmployeeDashboardViewModel
+@{
     ViewData["Title"] = "Employee Dashboard";
     Layout = "_Layout";
 }
 
-<div class="container-fluid px-4 py-4">
-    <!-- Header -->
-    <div class="d-flex justify-content-between align-items-center mb-4">
-        <h1 class="h3 mb-0 text-gray-800">Employee Dashboard</h1>
-        <div class="d-flex gap-2">
-            <button class="btn btn-light rounded-circle" title="Notifications">
-                <i class="fas fa-bell"></i>
-            </button>
-            <button class="btn btn-light rounded-circle" title="Settings">
-                <i class="fas fa-cog"></i>
-            </button>
-            <button class="btn btn-light rounded-circle" title="Logout">
-                <i class="fas fa-sign-out-alt"></i>
-            </button>
+<style>
+    .employee-container {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        min-height: 100vh;
+        padding: 0;
+        margin: 0;
+        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    }
+
+    .sidebar {
+        background: rgba(255, 255, 255, 0.95);
+        backdrop-filter: blur(10px);
+        border-right: none;
+        min-height: 100vh;
+        padding: 0;
+        position: fixed;
+        width: 220px; /* Reduced from 280px */
+        z-index: 1000;
+        box-shadow: 4px 0 20px rgba(0, 0, 0, 0.1);
+        border-radius: 0 20px 20px 0;
+    }
+
+    .sidebar-header {
+        padding: 20px 15px; /* Reduced padding */
+        text-align: center;
+        border-bottom: 1px solid rgba(102, 126, 234, 0.1);
+    }
+
+    .sidebar-header h3 {
+        color: #2d3748;
+        font-weight: 700;
+        margin: 0;
+        font-size: 20px; /* Smaller font */
+    }
+
+    .sidebar-header p {
+        color: #718096;
+        margin: 5px 0 0 0;
+        font-size: 12px; /* Smaller font */
+    }
+
+    .sidebar-item {
+        padding: 12px 15px; /* Reduced padding */
+        cursor: pointer;
+        transition: all 0.3s ease;
+        font-weight: 500;
+        color: #4a5568;
+        border-left: 4px solid transparent;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        margin: 3px 10px; /* Reduced margin */
+        border-radius: 8px; /* Smaller radius */
+        font-size: 14px; /* Smaller font */
+    }
+
+    .sidebar-item:hover {
+        background: rgba(102, 126, 234, 0.1);
+        color: #667eea;
+        transform: translateX(3px); /* Smaller transform */
+    }
+
+    .sidebar-item.active {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        border-left-color: #667eea;
+        box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
+    }
+
+    .sidebar-item i {
+        font-size: 16px; /* Smaller icon */
+        width: 18px;
+    }
+
+    .main-content {
+        margin-left: 220px; /* Match sidebar width */
+        padding: 20px; /* Reduced padding */
+        max-width: 1200px; /* Limit max width */
+    }
+
+    .employee-header {
+        text-align: center;
+        color: white;
+        font-size: 24px; /* Smaller font */
+        font-weight: 700;
+        margin-bottom: 20px; /* Reduced margin */
+        text-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+    }
+
+    .content-card {
+        background: rgba(255, 255, 255, 0.95);
+        backdrop-filter: blur(10px);
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        border-radius: 15px; /* Smaller radius */
+        padding: 20px; /* Reduced padding */
+        margin-bottom: 20px; /* Reduced margin */
+        box-shadow: 0 15px 30px rgba(0, 0, 0, 0.1);
+        transition: transform 0.3s ease, box-shadow 0.3s ease;
+    }
+
+    .content-card:hover {
+        transform: translateY(-3px); /* Smaller transform */
+        box-shadow: 0 20px 40px rgba(0, 0, 0, 0.15);
+    }
+
+    .book-time-off {
+        background: rgba(255, 255, 255, 0.95);
+        backdrop-filter: blur(10px);
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        border-radius: 15px; /* Smaller radius */
+        padding: 20px; /* Reduced padding */
+        margin-bottom: 20px; /* Reduced margin */
+        box-shadow: 0 15px 30px rgba(0, 0, 0, 0.1);
+    }
+
+    .card-title {
+        color: #2d3748;
+        font-size: 18px; /* Smaller font */
+        font-weight: 700;
+        margin-bottom: 15px; /* Reduced margin */
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+
+    .form-group {
+        margin-bottom: 15px; /* Reduced margin */
+    }
+
+    .form-label {
+        color: #4a5568;
+        font-weight: 600;
+        margin-bottom: 5px; /* Reduced margin */
+        display: block;
+        font-size: 13px; /* Smaller font */
+    }
+
+    .form-control {
+        border: 2px solid #e2e8f0;
+        border-radius: 8px; /* Smaller radius */
+        padding: 8px 12px; /* Reduced padding */
+        width: 100%;
+        font-size: 14px; /* Smaller font */
+        transition: all 0.3s ease;
+        background: rgba(255, 255, 255, 0.9);
+    }
+
+    .form-control:focus {
+        border-color: #667eea;
+        box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        outline: none;
+        transform: translateY(-2px);
+    }
+
+    .btn-book {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        border: none;
+        padding: 10px 20px; /* Reduced padding */
+        border-radius: 8px; /* Smaller radius */
+        cursor: pointer;
+        font-weight: 600;
+        font-size: 14px; /* Smaller font */
+        transition: all 0.3s ease;
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+    }
+
+    .btn-book:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 20px rgba(102, 126, 234, 0.4);
+    }
+
+    .balance-table {
+        width: 100%;
+        border-collapse: separate;
+        border-spacing: 0;
+        margin-top: 10px; /* Reduced margin */
+        border-radius: 8px; /* Smaller radius */
+        overflow: hidden;
+        box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+        font-size: 13px; /* Smaller font */
+    }
+
+    .balance-table th,
+    .balance-table td {
+        padding: 10px 15px; /* Reduced padding */
+        text-align: left;
+    }
+
+    .balance-table th {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        font-weight: 600;
+        font-size: 12px; /* Smaller font */
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+
+    .balance-table td {
+        background: rgba(255, 255, 255, 0.9);
+        border-bottom: 1px solid #e2e8f0;
+    }
+
+    .balance-table tr:last-child td {
+        border-bottom: none;
+    }
+
+    .leave-type-vacation {
+        color: #38a169;
+        font-weight: 600;
+    }
+
+    .leave-type-sick {
+        color: #e53e3e;
+        font-weight: 600;
+    }
+    .leave-type-emergency {
+    color: #b91c1c; /* Dark Red */
+    font-weight: 600;
+    }
+
+.leave-type-maternity {
+    color: #4299e1; /* Light Blue */
+    font-weight: 600;
+    }
+
+    .holiday-card {
+        background: rgba(255, 255, 255, 0.95);
+        backdrop-filter: blur(10px);
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        border-radius: 15px; /* Smaller radius */
+        padding: 20px; /* Reduced padding */
+        margin-bottom: 20px; /* Reduced margin */
+        box-shadow: 0 15px 30px rgba(0, 0, 0, 0.1);
+        transition: transform 0.3s ease;
+    }
+
+    .holiday-card:hover {
+        transform: translateY(-3px); /* Smaller transform */
+    }
+
+    .holiday-item {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 8px 0; /* Reduced padding */
+        border-bottom: 1px solid #e2e8f0;
+        transition: all 0.3s ease;
+        font-size: 13px; /* Smaller font */
+    }
+
+    .holiday-item:hover {
+        background: rgba(102, 126, 234, 0.05);
+        border-radius: 6px; /* Smaller radius */
+        padding: 8px 10px; /* Reduced padding */
+        margin: 0 -10px; /* Reduced margin */
+    }
+
+    .holiday-item:last-child {
+        border-bottom: none;
+    }
+
+    .holiday-name {
+        font-weight: 600;
+        color: #2d3748;
+    }
+
+    .holiday-date {
+        color: #718096;
+        font-size: 12px; /* Smaller font */
+        background: #f7fafc;
+        padding: 3px 8px; /* Reduced padding */
+        border-radius: 12px; /* Smaller radius */
+    }
+
+    .leave-card {
+        background: rgba(255, 255, 255, 0.95);
+        backdrop-filter: blur(10px);
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        border-radius: 15px; /* Smaller radius */
+        padding: 20px; /* Reduced padding */
+        margin-bottom: 15px; /* Reduced margin */
+        position: relative;
+        box-shadow: 0 8px 20px rgba(0, 0, 0, 0.1);
+        transition: all 0.3s ease;
+        font-size: 13px; /* Smaller font */
+    }
+
+    .leave-card:hover {
+        transform: translateY(-3px); /* Smaller transform */
+        box-shadow: 0 12px 30px rgba(0, 0, 0, 0.15);
+    }
+
+    .leave-status {
+        position: absolute;
+        top: 15px; /* Adjusted position */
+        right: 15px; /* Adjusted position */
+        padding: 4px 12px; /* Reduced padding */
+        border-radius: 12px; /* Smaller radius */
+        font-size: 11px; /* Smaller font */
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+
+    .status-pending {
+        background: linear-gradient(135deg, #fbb6ce 0%, #f687b3 100%);
+        color: #702459;
+    }
+
+    .status-approved {
+        background: linear-gradient(135deg, #9ae6b4 0%, #68d391 100%);
+        color: #22543d;
+    }
+
+    .status-rejected {
+        background: linear-gradient(135deg, #feb2b2 0%, #fc8181 100%);
+        color: #742a2a;
+    }
+
+    .leave-type-indicator {
+        width: 12px; /* Smaller indicator */
+        height: 12px; /* Smaller indicator */
+        border-radius: 50%;
+        display: inline-block;
+        margin-right: 8px;
+        box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
+    }
+
+    .vacation-indicator {
+        background: linear-gradient(135deg, #38a169 0%, #48bb78 100%);
+    }
+
+    .sick-indicator {
+        background: linear-gradient(135deg, #e53e3e 0%, #fc8181 100%);
+    }
+    .emergency-indicator {
+    background: linear-gradient(135deg, #7f1d1d 0%, #991b1b 100%); /* Dark red */
+}
+
+.maternity-indicator {
+    background: linear-gradient(135deg, #63b3ed 0%, #bee3f8 100%); /* Light blue */
+}
+
+    .alert-custom {
+        padding: 12px 15px; /* Reduced padding */
+        margin-bottom: 20px; /* Reduced margin */
+        border-radius: 8px; /* Smaller radius */
+        border: none;
+        font-weight: 500;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        font-size: 13px; /* Smaller font */
+    }
+
+    .alert-success {
+        background: linear-gradient(135deg, #c6f6d5 0%, #9ae6b4 100%);
+        color: #22543d;
+        box-shadow: 0 4px 10px rgba(56, 161, 105, 0.2);
+    }
+
+    .alert-error {
+        background: linear-gradient(135deg, #fed7d7 0%, #feb2b2 100%);
+        color: #742a2a;
+        box-shadow: 0 4px 10px rgba(229, 62, 62, 0.2);
+    }
+
+    .allowance-info {
+        background: linear-gradient(135deg, #e6fffa 0%, #b2f5ea 100%);
+        border: 1px solid #81e6d9;
+        border-radius: 8px; /* Smaller radius */
+        padding: 10px; /* Reduced padding */
+        margin-top: 10px; /* Reduced margin */
+        font-size: 12px; /* Smaller font */
+        color: #234e52;
+    }
+
+    .stats-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); /* Smaller min width */
+        gap: 15px; /* Reduced gap */
+        margin-bottom: 20px; /* Reduced margin */
+    }
+
+    .stat-card {
+        background: rgba(255, 255, 255, 0.95);
+        backdrop-filter: blur(10px);
+        border-radius: 12px; /* Smaller radius */
+        padding: 15px; /* Reduced padding */
+        text-align: center;
+        box-shadow: 0 8px 20px rgba(0, 0, 0, 0.1);
+        transition: transform 0.3s ease;
+    }
+
+    .stat-card:hover {
+        transform: translateY(-3px); /* Smaller transform */
+    }
+
+    .stat-number {
+        font-size: 1.5rem; /* Smaller font */
+        font-weight: 700;
+        color: #667eea;
+        margin-bottom: 3px; /* Reduced margin */
+    }
+
+    .stat-label {
+        color: #718096;
+        font-size: 0.75rem; /* Smaller font */
+        font-weight: 500;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+
+    /* Container width limit */
+    .container-fluid {
+        max-width: 1400px;
+        margin: 0 auto;
+    }
+
+    /* Responsive Design */
+    @@media (max-width: 768px) {
+        .sidebar {
+            width: 100%;
+            position: relative;
+            border-radius: 0;
+        }
+
+        .main-content {
+            margin-left: 0;
+            padding: 15px 10px;
+        }
+
+        .employee-header {
+            font-size: 20px;
+        }
+
+        .content-card,
+        .book-time-off,
+        .holiday-card {
+            padding: 15px;
+        }
+    }
+
+    /* Animation for page load */
+    @@keyframes fadeInUp {
+        from {
+            opacity: 0;
+            transform: translate3d(0, 20px, 0);
+        }
+        to {
+            opacity: 1;
+            transform: translate3d(0, 0, 0);
+        }
+    }
+
+    .content-card,
+    .book-time-off,
+    .holiday-card,
+    .leave-card {
+        animation: fadeInUp 0.5s ease-out;
+    }
+
+    /* Stagger animation */
+    .content-card:nth-child(1) { animation-delay: 0.1s; }
+    .content-card:nth-child(2) { animation-delay: 0.15s; }
+    .content-card:nth-child(3) { animation-delay: 0.2s; }
+</style>
+
+<div class="employee-container">
+    <!-- Sidebar -->
+    <div class="sidebar">
+        <div class="sidebar-header">
+            <h3>SmartLeave</h3>
+            <p>Employee Portal</p>
+        </div>
+        
+        <div class="sidebar-item @(Model.ActiveSection == "dashboard" ? "active" : "")" onclick="location.href='@Url.Action("Dashboard", new { section = "dashboard" })'">
+            <i class="fas fa-tachometer-alt"></i>
+            <span>Dashboard</span>
+        </div>
+        <div class="sidebar-item" onclick="alert('Calendar feature coming soon!')">
+            <i class="fas fa-calendar-alt"></i>
+            <span>Calendar</span>
+        </div>
+        <div class="sidebar-item" onclick="alert('My Account feature coming soon!')">
+            <i class="fas fa-user-circle"></i>
+            <span>My Account</span>
+        </div>
+        <div class="sidebar-item" onclick="alert('Support feature coming soon!')">
+            <i class="fas fa-life-ring"></i>
+            <span>Support</span>
+        </div>
+        <div class="sidebar-item @(Model.ActiveSection == "myleaves" ? "active" : "")" onclick="location.href='@Url.Action("MyLeaves","Employee")'">
+            <i class="fas fa-clipboard-list"></i>
+            <span>My Leaves</span>
         </div>
     </div>
 
-    <!-- Welcome Section -->
-    <div class="mb-4">
-        <h2 class="h4 mb-1">Welcome back, Employee! 👋</h2>
-        <p class="text-muted">Here's what's happening with your platform today.</p>
+    <!-- Main Content -->
+    <div class="main-content">
+        <div class="container-fluid">
+            <div class="employee-header">Welcome back, @Model.EmployeeName! 👋</div>
+
+            @if (TempData["SuccessMessage"] != null)
+            {
+                <div class="alert-custom alert-success">
+                    <i class="fas fa-check-circle"></i>
+                    @TempData["SuccessMessage"]
+                </div>
+            }
+
+            @if (TempData["ErrorMessage"] != null)
+            {
+                <div class="alert-custom alert-error">
+                    <i class="fas fa-exclamation-triangle"></i>
+                    @TempData["ErrorMessage"]
+                </div>
+            }
+
+            @if (Model.ActiveSection == "dashboard")
+            {
+                <!-- Stats Grid -->
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <div class="stat-number">@Model.TotalRemainingDays</div>
+                        <div class="stat-label">Days Remaining</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-number">@Model.LeaveBalances.Count</div>
+                        <div class="stat-label">Leave Types</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-number">@Model.UpcomingHolidays.Count</div>
+                        <div class="stat-label">Upcoming Holidays</div>
+                    </div>
+                </div>
+
+                <div class="row">
+                    <!-- Left Column - Book Time Off -->
+                    <div class="col-md-8">
+                        <div class="book-time-off">
+                            <h4 class="card-title">
+                                <i class="fas fa-calendar-plus" style="color: #667eea;"></i>
+                                Book Time Off
+                            </h4>
+                            
+                            <form asp-action="RequestLeave" method="post" enctype="multipart/form-data">
+                                <div class="form-group">
+                                    <label class="form-label">Leave Type</label>
+                                    <select name="LeaveTypeId" class="form-control" required>
+                                        <option value="">Select leave type</option>
+                                        @foreach (var leaveType in Model.LeaveTypes)
+                                        {
+                                            <option value="@leaveType.Id">@leaveType.Name</option>
+                                        }
+                                    </select>
+                                </div>
+
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <div class="form-group">
+                                            <label class="form-label">Start Date</label>
+                                            <input type="date" name="StartDate" class="form-control" required />
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <div class="form-group">
+                                            <label class="form-label">End Date</label>
+                                            <input type="date" name="EndDate" class="form-control" required />
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="form-group">
+                                    <label class="form-label">Comment </label>
+                                    <textarea name="Comment" class="form-control" rows="2" placeholder="Add a comment about your leave request..."></textarea>
+                                </div>
+                             <div class="form-group">
+                                  <label class="form-label">Attachment (Optional)</label>
+                                  <input type="file" name="Attachment" class="form-control" />
+                             </div>
+
+                                <div class="allowance-info">
+                                    <i class="fas fa-info-circle"></i>
+                                    <strong>Available Balance:</strong> @Model.TotalRemainingDays days remaining
+                                </div>
+
+                                <div style="margin-top: 15px;">
+                                    <button type="submit" class="btn-book">
+                                        <i class="fas fa-paper-plane"></i>
+                                        Submit Request
+                                    </button>
+                                </div>
+                            </form>
+                        </div>
+
+                        <!-- Balance Table -->
+                        <div class="content-card">
+                            <h5 class="card-title">
+                                <i class="fas fa-chart-pie" style="color: #667eea;"></i>
+                                Leave Balance Overview
+                            </h5>
+                            <table class="balance-table">
+                                <thead>
+                                    <tr>
+                                        <th>Leave Type</th>
+                                        <th>Used</th>
+                                        <th>Available</th>
+                                        <th>Total</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @foreach (var balance in Model.LeaveBalances)
+                                    {
+                                        <tr>
+                                            <td>
+                                                @{
+    var indicatorClass = balance.LeaveType.ToLower() switch
+    {
+        "vacation" => "vacation-indicator",
+        "sick" => "sick-indicator",
+        "emergency" => "emergency-indicator",
+        "maternity" => "maternity-indicator",
+        _ => "sick-indicator"
+    };
+}
+<span class="leave-type-indicator @indicatorClass"></span>
+
+                                                    @{
+    var typeClass = balance.LeaveType.ToLower() switch
+    {
+        "vacation" => "leave-type-vacation",
+        "sick" => "leave-type-sick",
+        "emergency" => "leave-type-emergency",
+        "maternity" => "leave-type-maternity",
+        _ => "leave-type-sick"
+    };
+}
+<span class="@typeClass">
+    @balance.LeaveType
+</span>
+
+                                            </td>
+                                            <td><strong>@balance.UsedDays</strong></td>
+                                            <td><strong>@balance.RemainingDays</strong></td>
+                                            <td>@balance.Allowance</td>
+                                        </tr>
+                                    }
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <!-- Right Column - Public Holidays -->
+                    <div class="col-md-4">
+                        <div class="holiday-card">
+                            <h5 class="card-title">
+                                <i class="fas fa-star" style="color: #ffc107;"></i>
+                                Upcoming Holidays
+                            </h5>
+                            @if (Model.UpcomingHolidays.Any())
+                            {
+                                @foreach (var holiday in Model.UpcomingHolidays)
+                                {
+                                    <div class="holiday-item">
+                                        <span class="holiday-name">@holiday.Name</span>
+                                        <span class="holiday-date">@holiday.HolidayDate.ToString("MMM dd")</span>
+                                    </div>
+                                }
+                            }
+                            else
+                            {
+                                <div style="text-align: center; color: #718096; padding: 15px;">
+                                    <i class="fas fa-calendar-times" style="font-size: 36px; margin-bottom: 8px;"></i>
+                                    <p style="margin: 0;">No upcoming holidays</p>
+                                </div>
+                            }
+                        </div>
+                    </div>
+                </div>
+            }
+            else if (Model.ActiveSection == "myleaves")
+            {
+                <div class="employee-header">My Leave History</div>
+                
+                @if (Model.RecentLeaves.Any())
+                {
+                    @foreach (var leave in Model.RecentLeaves)
+                    {
+                        <div class="leave-card">
+                            <div class="leave-status status-@leave.Status.ToString()">
+                                @leave.Status
+                            </div>
+                            
+                            <div style="margin-bottom: 10px;">
+                                <span class="leave-type-indicator @(leave.LeaveType.ToLower() == "vacation" ? "vacation-indicator" : "sick-indicator")"></span>
+                                <strong class="@(leave.LeaveType.ToLower() == "vacation" ? "leave-type-vacation" : "leave-type-sick")" style="font-size: 16px;">
+                                    @leave.LeaveType
+                                </strong>
+                            </div>
+                            
+                            <div style="margin: 10px 0; color: #4a5568;">
+                                <i class="fas fa-calendar-alt" style="margin-right: 6px; color: #667eea;"></i>
+                                <strong>@leave.StartDate.ToString("MMM dd") - @leave.EndDate.ToString("MMM dd, yyyy")</strong>
+                                <span style="background: #f7fafc; padding: 2px 6px; border-radius: 10px; margin-left: 8px; font-size: 11px;">
+                                    @leave.TotalDays day@(leave.TotalDays != 1 ? "s" : "")
+                                </span>
+                            </div>
+
+                            @if (!string.IsNullOrEmpty(leave.Comment))
+                            {
+                                <div style="background: #f7fafc; padding: 8px; border-radius: 6px; margin: 8px 0; border-left: 3px solid #667eea;">
+                                    <i class="fas fa-quote-left" style="color: #667eea; margin-right: 6px;"></i>
+                                    <em>@leave.Comment</em>
+                                </div>
+                            }
+                            
+                            @if (leave.Status==LeaveStatus.Pending)
+                            {
+                                <div style="color: #718096; font-size: 12px; margin-top: 10px; display: flex; align-items: center; gap: 6px;">
+                                    <i class="fas fa-clock"></i>
+                                    Pending approval from <strong>@leave.ManagerName</strong>
+                                </div>
+                            }
+                            else if (leave.Status == LeaveStatus.Approved)
+                            {
+                                <div style="color: #38a169; font-size: 12px; margin-top: 10px; display: flex; align-items: center; gap: 6px;">
+                                    <i class="fas fa-check-circle"></i>
+                                    Approved by <strong>@leave.ManagerName</strong>
+                                </div>
+                            }
+                            else if (leave.Status ==LeaveStatus.Rejected)
+                            {
+                                <div style="color: #e53e3e; font-size: 12px; margin-top: 10px; display: flex; align-items: center; gap: 6px;">
+                                    <i class="fas fa-times-circle"></i>
+                                    Rejected by <strong>@leave.ManagerName</strong>
+                                </div>
+                            }
+                        </div>
+                    }
+                }
+                else
+                {
+                    <div class="content-card" style="text-align: center; padding: 40px;">
+                        <i class="fas fa-clipboard-list" style="font-size: 48px; color: #e2e8f0; margin-bottom: 15px;"></i>
+                        <h4 style="color: #4a5568; margin-bottom: 8px;">No Leave Requests Yet</h4>
+                        <p style="color: #718096; margin-bottom: 20px;">You haven't submitted any leave requests. Start by booking your first time off!</p>
+                        <button onclick="location.href='@Url.Action("Dashboard")'" class="btn-book">
+                            <i class="fas fa-plus"></i>
+                            Request Leave
+                        </button>
+                    </div>
+                }
+            }
+        </div>
     </div>
-
-
+</div>

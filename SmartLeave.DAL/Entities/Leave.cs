@@ -64,12 +64,12 @@ namespace SmartLeave.DAL.Entities
         /// The manager or admin who approved/rejected—FK to AspNetUsers(Id).
         /// Null if still pending.
         /// </summary>
-        public string ApprovedById { get; set; }
+        public string? ApprovedById { get; set; } 
 
         /// <summary>
         /// Navigation to the approver (User).
         /// </summary>
-        public virtual User ApprovedBy { get; set; }
+        public virtual User? ApprovedBy { get; set; }
 
         /// <summary>
         /// When it was approved or rejected. Null if still pending.
@@ -84,12 +84,12 @@ namespace SmartLeave.DAL.Entities
         /// <summary>
         /// Manager/Admin’s note on approval/rejection.
         /// </summary>
-        public string ApprovalNote { get; set; }
+        public string? ApprovalNote { get; set; }
 
         /// <summary>
         /// Optional link to a doctor’s note or other document.
         /// </summary>
-        public string AttachmentUrl { get; set; }
+        public string? AttachmentUrl { get; set; }
 
         /// <summary>
         /// Calculated as (EndDate – StartDate).Days + 1 (decimal for partial days if needed).
