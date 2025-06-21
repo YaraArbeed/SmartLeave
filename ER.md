@@ -68,23 +68,7 @@ erDiagram
         date holiday_date
         varchar description
     }
-    events {
-        int id PK
-        varchar title
-        date event_date
-        varchar description
-        int created_by FK
-        datetime created_on
-    }
-    audit_logs {
-        int id PK
-        int user_id FK
-        varchar action_type
-        varchar target_table
-        int target_id
-        datetime timestamp
-        varchar notes
-    }
+
 
     roles ||--o{ users               : "role_id"
     countries ||--o{ offices          : "country_id"
@@ -97,6 +81,4 @@ erDiagram
     users ||--o{ leaves               : "approved_by"
     users ||--o{ leave_balances       : "employee_id"
     leave_types ||--o{ leave_balances  : "leave_type_id"
-    users ||--o{ events               : "created_by"
-    users ||--o{ audit_logs           : "user_id"
 ```
