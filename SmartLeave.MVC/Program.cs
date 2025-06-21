@@ -1,14 +1,18 @@
-using SmartLeave.MVC.Services;
 using Microsoft.AspNetCore.Authentication.Cookies;
+using Microsoft.Extensions.DependencyInjection.Extensions;
+using SmartLeave.MVC.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
 builder.Services.AddControllersWithViews();
+builder.Configuration.AddUserSecrets<Program>();
+builder.Services.AddSingleton<OpenAIChatService>();
 
 // Get the API base URL from configuration
 var apiBaseUrl = builder.Configuration.GetConnectionString("ApiBaseUrl") ?? "https://localhost:7120";
 Console.WriteLine($"API Base URL: {apiBaseUrl}"); // Debug output
+
 
 // Add HttpClient configurations with explicit base address
 builder.Services.AddHttpClient("API", client =>

@@ -36,12 +36,10 @@ namespace SmartLeave.MVC.Services
         {
             SetAuthorizationHeader();
 
-            var response = await _httpClient.GetAsync("api/Leaves/mine");
+            var response = await _httpClient.GetAsync($"api/Leaves/mine");
 
-            // Add debugging
             var responseContent = await response.Content.ReadAsStringAsync();
-            System.Diagnostics.Debug.WriteLine($"Status: {response.StatusCode}");
-            System.Diagnostics.Debug.WriteLine($"Content: {responseContent}");
+
 
             if (response.IsSuccessStatusCode)
             {
@@ -179,44 +177,42 @@ namespace SmartLeave.MVC.Services
 
             try
             {
-                // Map MVC filter model to API DTO
-                var requestBody = new
-                {
-                    fromDate = filter.StartDate,
-                    toDate = filter.EndDate,
-                    teamId = filter.TeamId,
-                    leaveTypeId = filter.LeaveTypeId,
-                    officeId = filter.OfficeId,
-                    countryId = filter.CountryId,
-                    status = filter.Status,
-                    approverId = filter.ApproverId,
-                    employeeId = filter.EmployeeId
-                };
+                var queryParams = new List<string>();
 
-                var json = JsonSerializer.Serialize(requestBody);
-                Console.WriteLine($"Leave Request Body: {json}");
+                if (filter.StartDate.HasValue)
+                    queryParams.Add($"StartDate={filter.StartDate.Value:yyyy-MM-dd}");
+                if (filter.EndDate.HasValue)
+                    queryParams.Add($"EndDate={filter.EndDate.Value:yyyy-MM-dd}");
+                if (!string.IsNullOrEmpty(filter.Status))
+                    queryParams.Add($"Status={filter.Status}");
+                if (!string.IsNullOrEmpty(filter.EmployeeId))
+                    queryParams.Add($"EmployeeId={filter.EmployeeId}");
+                if (filter.TeamId.HasValue)
+                    queryParams.Add($"TeamId={filter.TeamId}");
+                if (filter.OfficeId.HasValue)
+                    queryParams.Add($"OfficeId={filter.OfficeId}");
+                if (filter.CountryId.HasValue)
+                    queryParams.Add($"CountryId={filter.CountryId}");
+                if (!string.IsNullOrEmpty(filter.ApproverId))
+                    queryParams.Add($"ApproverId={filter.ApproverId}");
+                if (filter.LeaveTypeId.HasValue)
+                    queryParams.Add($"LeaveTypeId={filter.LeaveTypeId}");
 
-                var content = new StringContent(json, Encoding.UTF8, "application/json");
+                var query = string.Join("&", queryParams);
+                var url = $"api/admin/reports/leaves?{query}";
 
-                var response = await _httpClient.PostAsync("api/admin/reports/leaves", content);
+                var response = await _httpClient.GetAsync(url);
 
                 if (response.IsSuccessStatusCode)
                 {
-                    var responseJson = await response.Content.ReadAsStringAsync();
-                    Console.WriteLine($"Leaves API Response: {responseJson}");
-
-                    var options = new JsonSerializerOptions
-                    {
-                        PropertyNameCaseInsensitive = true
-                    };
-
-                    var leaves = JsonSerializer.Deserialize<List<AdminLeaveModel>>(responseJson, options);
-                    return leaves ?? new List<AdminLeaveModel>();
+                    var json = await response.Content.ReadAsStringAsync();
+                    var options = new JsonSerializerOptions { PropertyNameCaseInsensitive = true };
+                    return JsonSerializer.Deserialize<List<AdminLeaveModel>>(json, options) ?? new List<AdminLeaveModel>();
                 }
                 else
                 {
-                    var errorContent = await response.Content.ReadAsStringAsync();
-                    Console.WriteLine($"Leaves API Error: {response.StatusCode} - {errorContent}");
+                    var error = await response.Content.ReadAsStringAsync();
+                    Console.WriteLine($"GetAdminLeavesAsync error: {response.StatusCode} - {error}");
                 }
             }
             catch (Exception ex)

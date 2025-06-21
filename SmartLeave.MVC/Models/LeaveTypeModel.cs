@@ -23,6 +23,7 @@
         public string EmployeeName { get; set; } = string.Empty;
         public decimal TotalRemainingDays { get; set; }
         public string ActiveSection { get; set; } = "dashboard";
+
     }
 
 }

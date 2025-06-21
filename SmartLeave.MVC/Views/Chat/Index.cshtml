@@ -1,0 +1,33 @@
+﻿@{
+    ViewData["Title"] = "SmartLeave Assistant";
+}
+
+<h2>SmartLeave Assistant</h2>
+
+<div>
+    <input type="text" id="userPrompt" placeholder="Ask your question..." style="width: 400px;" />
+    <button onclick="askChat()">Send</button>
+</div>
+
+<div id="chatLog" style="margin-top: 20px;"></div>
+
+<script>
+async function askChat() {
+    const prompt = document.getElementById('userPrompt').value;
+    const response = await fetch('/Chat/Ask', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ prompt }) // ✅ this sends JSON
+    });
+
+    const data = await response.json();
+    document.getElementById('chatLog').innerHTML += `
+        <p><strong>You:</strong> ${prompt}</p>
+        <p><strong>Assistant:</strong> ${data.response}</p>
+    `;
+    document.getElementById('userPrompt').value = '';
+}
+
+</script>

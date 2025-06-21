@@ -455,6 +455,7 @@
         </a>
     </div>
 
+
     @if (Model.AllLeaves != null && Model.AllLeaves.Any())
     {
         
@@ -484,7 +485,7 @@
         </div>
 
         <div class="leaves-grid">
-            @foreach (var leave in Model.AllLeaves.OrderByDescending(l => l.StartDate))
+            @foreach (var leave in Model.AllLeaves)
             {
                 <div class="leave-card">
                     <div class="card-header">
